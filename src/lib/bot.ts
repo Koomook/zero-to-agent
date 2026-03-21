@@ -50,14 +50,47 @@ function hasTaskMode() {
   );
 }
 
-async function getNextPendingTask(): Promise<Task | null> {
-  const { data } = await getSupabase()
+async function getNextPendingTask(
+  threadId?: string,
+): Promise<Task | null> {
+  const supabase = getSupabase();
+
+  // If this thread already has a submission, return that task
+  if (threadId) {
+    const { data: existing } = await supabase
+      .from("task_submissions")
+      .select("task_id")
+      .eq("thread_id", threadId)
+      .limit(1);
+
+    if (existing?.[0]) {
+      const { data: task } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("id", existing[0].task_id)
+        .single();
+      return task;
+    }
+  }
+
+  // Find a task that has no submissions yet
+  const { data: allTasks } = await supabase
     .from("tasks")
     .select("*")
-    .order("sort_order", { ascending: true })
-    .limit(1);
+    .order("sort_order", { ascending: true });
 
-  return data?.[0] ?? null;
+  if (!allTasks?.length) return null;
+
+  const { data: submittedTaskIds } = await supabase
+    .from("task_submissions")
+    .select("task_id");
+
+  const submitted = new Set(
+    (submittedTaskIds ?? []).map((s) => s.task_id),
+  );
+  const pending = allTasks.filter((t) => !submitted.has(t.id));
+
+  return pending[0] ?? allTasks[0]; // fallback to first if all assigned
 }
 
 async function getSubmissionByThread(
@@ -137,6 +170,31 @@ async function generateReply(input: string) {
   return result.text.trim();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function sendExpectedImage(thread: any, task: Task) {
+  if (!task.expected_image_url) return;
+
+  try {
+    const res = await fetch(task.expected_image_url);
+    if (!res.ok) return;
+    const buffer = Buffer.from(await res.arrayBuffer());
+    const contentType = res.headers.get("content-type") ?? "image/jpeg";
+
+    await thread.post({
+      markdown: "Target state:",
+      files: [
+        {
+          data: buffer,
+          filename: `expected.${contentType.split("/")[1] ?? "jpg"}`,
+          mimeType: contentType,
+        },
+      ],
+    });
+  } catch {
+    // If image fetch fails, just skip sending the image
+  }
+}
+
 async function handleConversation(thread: { post: (message: string) => Promise<unknown> }, text: string) {
   const reply = await generateReply(text);
   await thread.post(reply);
@@ -163,7 +221,7 @@ function createBot() {
       return;
     }
 
-    const task = await getNextPendingTask();
+    const task = await getNextPendingTask(thread.id);
     if (!task) {
       await handleConversation(thread, message.text ?? "");
       return;
@@ -176,6 +234,7 @@ function createBot() {
     await createSubmission(task.id, thread.id, platform, staffName);
 
     await thread.post(formatTaskPrompt(task));
+    await sendExpectedImage(thread, task);
   });
 
   bot.onDirectMessage(async (thread, message) => {
@@ -186,7 +245,7 @@ function createBot() {
       return;
     }
 
-    const task = await getNextPendingTask();
+    const task = await getNextPendingTask(thread.id);
     if (!task) {
       await handleConversation(thread, message.text ?? "");
       return;
@@ -202,6 +261,7 @@ function createBot() {
       message.author?.fullName ?? null,
     );
     await thread.post(formatTaskPrompt(task));
+    await sendExpectedImage(thread, task);
   });
 
   bot.onSubscribedMessage(async (thread, message) => {
@@ -228,15 +288,39 @@ function createBot() {
       return;
     }
 
-    const imageBuffer = Buffer.from(await imageAttachment.fetchData());
-    const imageUrl = await uploadImage(imageBuffer, "submission.jpg");
+    let imageBuffer: Buffer;
+    try {
+      imageBuffer = Buffer.from(await imageAttachment.fetchData());
+    } catch {
+      await thread.post("Failed to download the image. Please try uploading again.");
+      return;
+    }
+
+    const mimeType = imageAttachment.mimeType ?? "image/jpeg";
+    const ext = mimeType.split("/")[1] ?? "jpg";
+
+    let imageUrl: string;
+    try {
+      imageUrl = await uploadImage(imageBuffer, `submission.${ext}`);
+    } catch (e) {
+      console.error("[shelf-coach] Upload error:", e);
+      await thread.post("Failed to save image. Please try again.");
+      return;
+    }
 
     if (!submission.before_image_url) {
-      const guide = await analyzeBeforeImage(
-        imageBuffer,
-        submission.task.expected_image_url,
-        submission.task.text_guide,
-      );
+      let guide: string;
+      try {
+        guide = await analyzeBeforeImage(
+          imageBuffer,
+          submission.task.expected_image_url,
+          submission.task.text_guide,
+          mimeType,
+        );
+      } catch (e) {
+        console.error("[shelf-coach] Gemini analyze error:", e);
+        guide = "AI guide generation failed. Please follow the task guide above.";
+      }
 
       await updateSubmission(submission.id, {
         before_image_url: imageUrl,
@@ -245,7 +329,7 @@ function createBot() {
 
       await thread.post(
         [
-          "Before image received! Generating guide...",
+          "Before image received! Here's your guide:",
           "",
           guide,
           "",
@@ -253,11 +337,22 @@ function createBot() {
         ].join("\n"),
       );
     } else {
-      const { score, evaluation } = await evaluateAfterImage(
-        imageBuffer,
-        submission.task.expected_image_url,
-        submission.task.text_guide,
-      );
+      let score: number;
+      let evaluation: string;
+      try {
+        const result = await evaluateAfterImage(
+          imageBuffer,
+          submission.task.expected_image_url,
+          submission.task.text_guide,
+          mimeType,
+        );
+        score = result.score;
+        evaluation = result.evaluation;
+      } catch (e) {
+        console.error("[shelf-coach] Gemini evaluate error:", e);
+        score = 0;
+        evaluation = "AI evaluation failed. Manager will review manually.";
+      }
 
       await updateSubmission(submission.id, {
         after_image_url: imageUrl,
