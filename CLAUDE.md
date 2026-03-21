@@ -97,6 +97,29 @@ TELEGRAM_BOT_TOKEN           # Telegram Bot Token
 TELEGRAM_WEBHOOK_SECRET_TOKEN # Telegram webhook 검증
 ```
 
+## Key References
+
+### Vercel 배포
+- `vercel deploy --prod` — env vars는 Vercel 프로젝트 설정에 등록되어 있음 (9개)
+- `vercel.json` — Cron Job 설정 (`/api/cron/check-tasks`, daily)
+- Vercel Hobby plan 제약: cron은 daily만 가능 (hourly는 Pro 필요)
+- Deployment Protection은 OFF (Slack webhook 수신 위해)
+
+### Supabase Schema
+- **`supabase/schema.sql`** — 전체 DDL (task_lists, tasks, task_submissions)
+- `task_submissions.ai_guide_image_url` — Gemini가 생성한 가이드 이미지 URL (Phase 2.5에서 추가)
+- Storage bucket `shelf-coach` — public read, expected images(`expected/`) + submissions(`submissions/`)
+- Supabase MCP 사용 가능: `mcp__plugin_supabase_supabase__execute_sql`, `apply_migration` 등
+
+### Chat SDK 사용 패턴
+- **Webhook**: `src/app/api/webhooks/[platform]/route.ts` — `bot.webhooks[platform](request, { waitUntil })` + Next.js `after()`
+- **이벤트 핸들러**: `onNewMention`, `onDirectMessage`, `onSubscribedMessage` (bot.ts)
+- **프로액티브 발송**: `bot.initialize()` → `bot.channel("slack:CHANNEL_ID").post()` (cron route)
+- **스레드 subscribe**: `stateAdapter.subscribe(threadId)` — Slack threadId 형식: `slack:CHANNEL:TS`
+- **파일 발송**: `thread.post({ markdown: "...", files: [{ data: Buffer, filename, mimeType }] })`
+- **이미지 수신**: `message.attachments` → `fetchData()` → Buffer
+- **State**: `createPostgresState()` — `POSTGRES_URL` env로 Supabase PostgreSQL에 subscription 영속
+
 ## Dev Notes
 
 - 셸에 `SUPABASE_URL` env가 old project(`qmmvztkmvyeqljuhjtgi`)로 설정되어 있음. `unset SUPABASE_URL && unset SUPABASE_KEY` 후 `pnpm dev` 실행
