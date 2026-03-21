@@ -42,41 +42,61 @@ export async function GET(req: NextRequest) {
     return Response.json({ message: "No tasks to check", sent: 0 });
   }
 
-  // Initialize bot for proactive messaging
-  await bot.initialize();
+  try {
+    // Initialize bot for proactive messaging
+    await bot.initialize();
+  } catch (e) {
+    console.error("[cron] Bot init failed:", e);
+    return Response.json({
+      error: "Bot initialization failed",
+      details: String(e),
+    }, { status: 500 });
+  }
 
-  const channel = bot.channel(`slack:${channelId}`);
+  let channel;
+  try {
+    channel = bot.channel(`slack:${channelId}`);
+  } catch (e) {
+    console.error("[cron] Channel access failed:", e);
+    return Response.json({
+      error: "Channel access failed",
+      details: String(e),
+      channelId,
+    }, { status: 500 });
+  }
+
   const sent: string[] = [];
+  const errors: string[] = [];
 
   for (const task of tasks as Task[]) {
     try {
       const message = await channel.post(formatTaskPrompt(task));
 
-      // Create a submission record linked to this thread
-      if (message) {
-        const threadId =
-          (message as unknown as { id?: string })?.id ?? `cron-${Date.now()}`;
+      const threadId =
+        (message as unknown as { id?: string })?.id ?? `cron-${Date.now()}-${task.id.slice(0, 8)}`;
 
-        await getSupabase()
-          .from("task_submissions")
-          .insert({
-            task_id: task.id,
-            thread_id: threadId,
-            platform: "slack",
-            staff_name: null,
-            status: "pending",
-          });
+      await getSupabase()
+        .from("task_submissions")
+        .insert({
+          task_id: task.id,
+          thread_id: threadId,
+          platform: "slack",
+          staff_name: null,
+          status: "pending",
+        });
 
-        sent.push(task.title);
-      }
+      sent.push(task.title);
     } catch (e) {
-      console.error(`[cron] Failed to send task "${task.title}":`, e);
+      const errMsg = `${task.title}: ${String(e)}`;
+      console.error(`[cron] Failed:`, errMsg);
+      errors.push(errMsg);
     }
   }
 
   return Response.json({
-    message: `Sent ${sent.length} task checks`,
+    message: `Sent ${sent.length}/${tasks.length} task checks`,
     sent,
+    errors: errors.length > 0 ? errors : undefined,
     timestamp: new Date().toISOString(),
   });
 }
