@@ -15,10 +15,22 @@ const SHELF_COACH_SYSTEM = [
   "- Focus on actionable steps, not subjective opinions",
 ].join("\n");
 
-async function fetchImageAsBase64(url: string): Promise<string> {
+type Base64Image = {
+  image: string;
+  mimeType: string;
+};
+
+async function fetchImageAsBase64(url: string): Promise<Base64Image> {
   const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch image: ${res.status}`);
+  }
+
   const buffer = Buffer.from(await res.arrayBuffer());
-  return buffer.toString("base64");
+  return {
+    image: buffer.toString("base64"),
+    mimeType: res.headers.get("content-type")?.split(";")[0] ?? "image/jpeg",
+  };
 }
 
 export async function analyzeBeforeImage(
@@ -56,15 +68,15 @@ export async function analyzeBeforeImage(
   });
 
   if (expectedImageUrl) {
-    const expectedBase64 = await fetchImageAsBase64(expectedImageUrl);
+    const expectedImage = await fetchImageAsBase64(expectedImageUrl);
     content.push({
       type: "text",
       text: "This is the EXPECTED (goal) state from the manager:",
     });
     content.push({
       type: "image",
-      image: expectedBase64,
-      mimeType: "image/jpeg",
+      image: expectedImage.image,
+      mimeType: expectedImage.mimeType,
     });
   }
 
@@ -114,15 +126,15 @@ export async function evaluateAfterImage(
   });
 
   if (expectedImageUrl) {
-    const expectedBase64 = await fetchImageAsBase64(expectedImageUrl);
+    const expectedImage = await fetchImageAsBase64(expectedImageUrl);
     content.push({
       type: "text",
       text: "This is the EXPECTED (goal) state from the manager:",
     });
     content.push({
       type: "image",
-      image: expectedBase64,
-      mimeType: "image/jpeg",
+      image: expectedImage.image,
+      mimeType: expectedImage.mimeType,
     });
   }
 
@@ -140,4 +152,90 @@ export async function evaluateAfterImage(
     score: scoreMatch ? parseInt(scoreMatch[1], 10) : 50,
     evaluation: evalMatch ? evalMatch[1].trim() : text,
   };
+}
+
+export type GuideImageResult = {
+  guideImage: Buffer;
+  guideText: string;
+  mimeType: string;
+};
+
+export async function generateGuideImage(
+  beforeImageBuffer: Buffer,
+  expectedImageUrl: string | null,
+  textGuide: string | null,
+  imageMimeType: string = "image/jpeg",
+): Promise<GuideImageResult | null> {
+  const content: Array<
+    | { type: "text"; text: string }
+    | { type: "image"; image: string; mimeType: string }
+  > = [];
+
+  content.push({
+    type: "text",
+    text: [
+      "You are an AI visual guide generator for on-site task management.",
+      "A staff member uploaded a photo of the CURRENT state of their workspace.",
+      textGuide ? `The manager's task guide says: "${textGuide}"` : "",
+      "",
+      "Generate an image that shows what this SAME scene should look like",
+      "when the task is PROPERLY COMPLETED.",
+      "- Keep the same camera angle, lighting, and environment.",
+      "- Show items properly arranged, stocked, cleaned, or organized.",
+      "- The output should be a realistic transformation of the input photo.",
+      "",
+      "Also provide a brief text description of what you changed.",
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  });
+
+  content.push({
+    type: "image",
+    image: beforeImageBuffer.toString("base64"),
+    mimeType: imageMimeType,
+  });
+
+  if (expectedImageUrl) {
+    const expectedImage = await fetchImageAsBase64(expectedImageUrl);
+    content.push({
+      type: "text",
+      text: "Use this REFERENCE image as the goal state:",
+    });
+    content.push({
+      type: "image",
+      image: expectedImage.image,
+      mimeType: expectedImage.mimeType,
+    });
+  }
+
+  try {
+    const result = await generateText({
+      model: google("gemini-3.1-flash-image-preview"),
+      providerOptions: {
+        google: {
+          responseModalities: ["TEXT", "IMAGE"],
+        },
+      },
+      messages: [{ role: "user", content }],
+    });
+
+    const imageFile = result.files?.find((f) =>
+      f.mediaType?.startsWith("image/"),
+    );
+
+    if (!imageFile) {
+      console.warn("[shelf-coach] Gemini returned no image");
+      return null;
+    }
+
+    return {
+      guideImage: Buffer.from(imageFile.uint8Array),
+      guideText: result.text?.trim() ?? "",
+      mimeType: imageFile.mediaType ?? "image/png",
+    };
+  } catch (e) {
+    console.error("[shelf-coach] Guide image generation failed:", e);
+    return null;
+  }
 }

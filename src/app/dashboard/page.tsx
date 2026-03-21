@@ -73,10 +73,45 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+
+    const load = async () => {
+      const [tasksRes, subsRes] = await Promise.all([
+        fetch("/api/tasks"),
+        fetch("/api/submissions"),
+      ]);
+      if (cancelled) return;
+
+      setTasks(await tasksRes.json());
+      setSubmissions(await subsRes.json());
+      setLoading(false);
+    };
+
+    void load();
+    const interval = setInterval(() => {
+      void load();
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [fetchData]);
+
+  const [sending, setSending] = useState(false);
+
+  async function handleSendCheck() {
+    setSending(true);
+    try {
+      const res = await fetch("/api/cron/check-tasks?trigger=dashboard");
+      const data = await res.json();
+      alert(`Sent ${data.sent?.length ?? 0} task checks to Slack`);
+      fetchData();
+    } catch {
+      alert("Failed to send checks");
+    }
+    setSending(false);
+  }
 
   async function handleReview(submissionId: string, status: "ok" | "fail") {
     await fetch(`/api/submissions/${submissionId}/review`, {
@@ -112,11 +147,20 @@ export default function DashboardPage() {
               {submissions.length} submissions
             </p>
           </div>
-          {allOk && (
-            <div className="rounded-2xl bg-green-600 px-6 py-3 text-lg font-bold text-white shadow-lg">
-              Ready to Payout
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSendCheck}
+              disabled={sending}
+              className="rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:opacity-50"
+            >
+              {sending ? "Sending..." : "Send Check Now"}
+            </button>
+            {allOk && (
+              <div className="rounded-2xl bg-green-600 px-6 py-3 text-lg font-bold text-white shadow-lg">
+                Ready to Payout
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Task Overview */}

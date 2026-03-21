@@ -23,6 +23,7 @@ export type TaskSubmission = {
   before_image_url: string | null;
   after_image_url: string | null;
   ai_guide: string | null;
+  ai_guide_image_url: string | null;
   ai_score: number | null;
   ai_evaluation: string | null;
   status: "pending" | "reviewed" | "ok" | "fail";

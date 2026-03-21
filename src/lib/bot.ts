@@ -7,8 +7,16 @@ import { generateText } from "ai";
 import { Chat } from "chat";
 
 import { getBotRuntimeStatus, hasCompleteBotEnv } from "@/lib/env";
+import {
+  formatEvaluation,
+  formatTaskPrompt,
+  getExtensionFromMimeType,
+  getFirstImageAttachment,
+  hasImageAttachment,
+  pickNextPendingTask,
+} from "@/lib/bot-helpers";
 import { getSupabase, uploadImage } from "@/lib/supabase";
-import { analyzeBeforeImage, evaluateAfterImage } from "@/lib/gemini";
+import { analyzeBeforeImage, evaluateAfterImage, generateGuideImage } from "@/lib/gemini";
 import type { Task, TaskSubmission } from "@/lib/types";
 
 const SYSTEM_PROMPT = [
@@ -85,12 +93,10 @@ async function getNextPendingTask(
     .from("task_submissions")
     .select("task_id");
 
-  const submitted = new Set(
-    (submittedTaskIds ?? []).map((s) => s.task_id),
+  return pickNextPendingTask(
+    allTasks,
+    (submittedTaskIds ?? []).map((submission) => submission.task_id),
   );
-  const pending = allTasks.filter((t) => !submitted.has(t.id));
-
-  return pending[0] ?? allTasks[0]; // fallback to first if all assigned
 }
 
 async function getSubmissionByThread(
@@ -132,30 +138,6 @@ async function createSubmission(
 
 async function updateSubmission(id: string, updates: Partial<TaskSubmission>) {
   await getSupabase().from("task_submissions").update(updates).eq("id", id);
-}
-
-function formatTaskPrompt(task: Task): string {
-  const lines = [
-    `**${task.title}** - Time to check!`,
-    "",
-    task.text_guide ? `Guide: ${task.text_guide}` : "",
-    "",
-    "Please upload a photo of the current state in this thread.",
-  ];
-  return lines.filter(Boolean).join("\n");
-}
-
-function formatEvaluation(score: number, evaluation: string): string {
-  const emoji = score >= 80 ? "V" : score >= 60 ? "!" : "X";
-  return [
-    `[${emoji}] AI Score: ${score}/100`,
-    "",
-    evaluation,
-    "",
-    score >= 80
-      ? "Great job! Waiting for manager review."
-      : "Needs improvement. Please check the guide again.",
-  ].join("\n");
 }
 
 async function generateReply(input: string) {
@@ -265,11 +247,7 @@ function createBot() {
   });
 
   bot.onSubscribedMessage(async (thread, message) => {
-    const hasImage = message.attachments?.some((a) =>
-      a.mimeType?.startsWith("image/"),
-    );
-
-    if (!hasImage || !hasTaskMode()) {
+    if (!hasImageAttachment(message.attachments) || !hasTaskMode()) {
       await handleConversation(thread, message.text ?? "");
       return;
     }
@@ -280,9 +258,7 @@ function createBot() {
       return;
     }
 
-    const imageAttachment = message.attachments?.find((a) =>
-      a.mimeType?.startsWith("image/"),
-    );
+    const imageAttachment = getFirstImageAttachment(message.attachments);
     if (!imageAttachment?.fetchData) {
       await thread.post("Could not process the image. Please try again.");
       return;
@@ -290,18 +266,22 @@ function createBot() {
 
     let imageBuffer: Buffer;
     try {
-      imageBuffer = Buffer.from(await imageAttachment.fetchData());
+      const imageData = await imageAttachment.fetchData();
+      imageBuffer =
+        imageData instanceof Uint8Array
+          ? Buffer.from(imageData)
+          : Buffer.from(new Uint8Array(imageData));
     } catch {
       await thread.post("Failed to download the image. Please try uploading again.");
       return;
     }
 
     const mimeType = imageAttachment.mimeType ?? "image/jpeg";
-    const ext = mimeType.split("/")[1] ?? "jpg";
+    const ext = getExtensionFromMimeType(mimeType);
 
     let imageUrl: string;
     try {
-      imageUrl = await uploadImage(imageBuffer, `submission.${ext}`);
+      imageUrl = await uploadImage(imageBuffer, `submission.${ext}`, mimeType);
     } catch (e) {
       console.error("[shelf-coach] Upload error:", e);
       await thread.post("Failed to save image. Please try again.");
@@ -322,9 +302,32 @@ function createBot() {
         guide = "AI guide generation failed. Please follow the task guide above.";
       }
 
+      // Generate guide image in parallel with text guide
+      const guideImageResult = await generateGuideImage(
+        imageBuffer,
+        submission.task.expected_image_url,
+        submission.task.text_guide,
+        mimeType,
+      );
+
+      let aiGuideImageUrl: string | null = null;
+      if (guideImageResult) {
+        try {
+          const ext = guideImageResult.mimeType.split("/")[1] ?? "png";
+          aiGuideImageUrl = await uploadImage(
+            guideImageResult.guideImage,
+            `guide.${ext}`,
+            guideImageResult.mimeType,
+          );
+        } catch (e) {
+          console.error("[shelf-coach] Guide image upload error:", e);
+        }
+      }
+
       await updateSubmission(submission.id, {
         before_image_url: imageUrl,
         ai_guide: guide,
+        ai_guide_image_url: aiGuideImageUrl,
       });
 
       await thread.post(
@@ -336,6 +339,24 @@ function createBot() {
           "After completing the task, upload the After image!",
         ].join("\n"),
       );
+
+      // Send AI-generated guide image if available
+      if (guideImageResult) {
+        try {
+          await thread.post({
+            markdown: "Here's what it should look like:",
+            files: [
+              {
+                data: guideImageResult.guideImage,
+                filename: `guide.${guideImageResult.mimeType.split("/")[1] ?? "png"}`,
+                mimeType: guideImageResult.mimeType,
+              },
+            ],
+          });
+        } catch (e) {
+          console.error("[shelf-coach] Guide image send error:", e);
+        }
+      }
     } else {
       let score: number;
       let evaluation: string;
