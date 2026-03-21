@@ -3,11 +3,11 @@
 import { useI18n } from "@/lib/i18n";
 
 const mockStaff = [
-  { id: "1", name: "田中 太郎" },
-  { id: "2", name: "佐藤 花子" },
-  { id: "3", name: "鈴木 一郎" },
-  { id: "4", name: "高橋 美咲" },
-  { id: "5", name: "伊藤 健太" },
+  { id: "1", name: "Taro Tanaka" },
+  { id: "2", name: "Hanako Sato" },
+  { id: "3", name: "Ichiro Suzuki" },
+  { id: "4", name: "Misaki Takahashi" },
+  { id: "5", name: "Kenta Ito" },
 ];
 
 export default function StaffPage() {

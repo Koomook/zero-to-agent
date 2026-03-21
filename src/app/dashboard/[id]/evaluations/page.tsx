@@ -28,12 +28,12 @@ const initialEvaluations: Evaluation[] = [
     taskTitle: "Cash Register Operation",
     status: "pending",
     chatLog: [
-      { id: "m1", sender: "staff", text: "レジの開店準備が完了しました。", timestamp: "09:00" },
-      { id: "m2", sender: "agent", text: "確認しました。レジの初期金額は合っていますか？", timestamp: "09:01" },
-      { id: "m3", sender: "staff", text: "はい、30,000円でセット済みです。写真を添付します。", imageUrl: "https://placehold.co/400x300/e2e8f0/475569?text=Register+Setup", timestamp: "09:02" },
-      { id: "m4", sender: "agent", text: "写真を確認しました。問題ありません。午前シフトを開始してください。", timestamp: "09:03" },
-      { id: "m5", sender: "staff", text: "午前シフト完了しました。売上報告書を添付します。", imageUrl: "https://placehold.co/400x300/e2e8f0/475569?text=Sales+Report+AM", timestamp: "12:30" },
-      { id: "m6", sender: "agent", text: "午前の売上を確認しました。午後もよろしくお願いします。", timestamp: "12:31" },
+      { id: "m1", sender: "staff", text: "Opening preparation for the register is complete.", timestamp: "09:00" },
+      { id: "m2", sender: "agent", text: "Confirmed. Is the initial register amount correct?", timestamp: "09:01" },
+      { id: "m3", sender: "staff", text: "Yes, it's set at $300. Attaching a photo.", imageUrl: "https://placehold.co/400x300/e2e8f0/475569?text=Register+Setup", timestamp: "09:02" },
+      { id: "m4", sender: "agent", text: "Photo confirmed. No issues. Please start the morning shift.", timestamp: "09:03" },
+      { id: "m5", sender: "staff", text: "Morning shift complete. Attaching the sales report.", imageUrl: "https://placehold.co/400x300/e2e8f0/475569?text=Sales+Report+AM", timestamp: "12:30" },
+      { id: "m6", sender: "agent", text: "Morning sales confirmed. Thank you, please continue with the afternoon shift.", timestamp: "12:31" },
     ],
   },
   {
@@ -42,10 +42,10 @@ const initialEvaluations: Evaluation[] = [
     taskTitle: "Inventory Check",
     status: "pending",
     chatLog: [
-      { id: "m7", sender: "staff", text: "食品棚の確認を開始します。", timestamp: "10:00" },
-      { id: "m8", sender: "agent", text: "了解です。不足品があれば写真付きで報告してください。", timestamp: "10:01" },
-      { id: "m9", sender: "staff", text: "カップ麺の在庫が残り3個です。", imageUrl: "https://placehold.co/400x300/e2e8f0/475569?text=Low+Stock+Noodles", timestamp: "10:15" },
-      { id: "m10", sender: "agent", text: "発注リストに追加しました。他に不足はありますか？", timestamp: "10:16" },
+      { id: "m7", sender: "staff", text: "Starting food shelf check.", timestamp: "10:00" },
+      { id: "m8", sender: "agent", text: "Understood. Please report any shortages with photos.", timestamp: "10:01" },
+      { id: "m9", sender: "staff", text: "Cup noodle stock is down to 3 units.", imageUrl: "https://placehold.co/400x300/e2e8f0/475569?text=Low+Stock+Noodles", timestamp: "10:15" },
+      { id: "m10", sender: "agent", text: "Added to the purchase order list. Any other shortages?", timestamp: "10:16" },
     ],
   },
   {
@@ -54,11 +54,11 @@ const initialEvaluations: Evaluation[] = [
     taskTitle: "Store Cleaning",
     status: "pending",
     chatLog: [
-      { id: "m11", sender: "staff", text: "店内清掃を完了しました。", timestamp: "08:30" },
-      { id: "m12", sender: "agent", text: "ビフォーアフターの写真をお願いします。", timestamp: "08:31" },
-      { id: "m13", sender: "staff", text: "清掃前後の写真です。", imageUrl: "https://placehold.co/400x300/e2e8f0/475569?text=Before+Cleaning", timestamp: "08:32" },
+      { id: "m11", sender: "staff", text: "Interior cleaning is complete.", timestamp: "08:30" },
+      { id: "m12", sender: "agent", text: "Please provide before and after photos.", timestamp: "08:31" },
+      { id: "m13", sender: "staff", text: "Here are the before and after photos.", imageUrl: "https://placehold.co/400x300/e2e8f0/475569?text=Before+Cleaning", timestamp: "08:32" },
       { id: "m14", sender: "staff", text: "", imageUrl: "https://placehold.co/400x300/e2e8f0/475569?text=After+Cleaning", timestamp: "08:32" },
-      { id: "m15", sender: "agent", text: "きれいになっていますね。次はトイレ清掃をお願いします。", timestamp: "08:33" },
+      { id: "m15", sender: "agent", text: "Looks clean. Next, please do the restroom cleaning.", timestamp: "08:33" },
     ],
   },
   {
@@ -67,8 +67,8 @@ const initialEvaluations: Evaluation[] = [
     taskTitle: "Customer Service",
     status: "approved",
     chatLog: [
-      { id: "m16", sender: "staff", text: "接客対応のシフトに入ります。", timestamp: "11:00" },
-      { id: "m17", sender: "agent", text: "本日のキャンペーン情報を確認してください。", timestamp: "11:01" },
+      { id: "m16", sender: "staff", text: "Starting my customer service shift.", timestamp: "11:00" },
+      { id: "m17", sender: "agent", text: "Please check today's campaign information.", timestamp: "11:01" },
     ],
   },
   {
@@ -77,10 +77,10 @@ const initialEvaluations: Evaluation[] = [
     taskTitle: "Order Placement",
     status: "rejected",
     chatLog: [
-      { id: "m18", sender: "staff", text: "発注作業を開始します。", timestamp: "14:00" },
-      { id: "m19", sender: "agent", text: "発注リストを確認してください。", timestamp: "14:01" },
-      { id: "m20", sender: "staff", text: "発注書を提出します。", imageUrl: "https://placehold.co/400x300/e2e8f0/475569?text=Order+Form", timestamp: "14:30" },
-      { id: "m21", sender: "agent", text: "数量に誤りがあります。修正をお願いします。", timestamp: "14:31" },
+      { id: "m18", sender: "staff", text: "Starting the order placement task.", timestamp: "14:00" },
+      { id: "m19", sender: "agent", text: "Please review the purchase order list.", timestamp: "14:01" },
+      { id: "m20", sender: "staff", text: "Submitting the order form.", imageUrl: "https://placehold.co/400x300/e2e8f0/475569?text=Order+Form", timestamp: "14:30" },
+      { id: "m21", sender: "agent", text: "There's a quantity error. Please correct it.", timestamp: "14:31" },
     ],
   },
 ];

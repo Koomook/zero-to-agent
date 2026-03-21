@@ -6,18 +6,18 @@ import { useI18n } from "@/lib/i18n";
 import TaskDetailModal from "@/components/task-detail-modal";
 
 const staffList: Staff[] = [
-  { id: "1", name: "田中 太郎" },
-  { id: "2", name: "佐藤 花子" },
-  { id: "3", name: "鈴木 一郎" },
-  { id: "4", name: "高橋 美咲" },
-  { id: "5", name: "伊藤 健太" },
+  { id: "1", name: "Taro Tanaka" },
+  { id: "2", name: "Hanako Sato" },
+  { id: "3", name: "Ichiro Suzuki" },
+  { id: "4", name: "Misaki Takahashi" },
+  { id: "5", name: "Kenta Ito" },
 ];
 
 const initialTasks: Task[] = [
   {
     id: "1",
-    title: "レジ対応",
-    description: "レジでの会計業務。正確な金銭管理と丁寧な接客を行う。",
+    title: "Cash Register Operation",
+    description: "Handle checkout transactions. Ensure accurate cash management and courteous customer service.",
     assigneeId: "1",
     status: "in_progress",
     priority: "high",
@@ -25,16 +25,16 @@ const initialTasks: Task[] = [
     createdAt: "2026-03-20",
     evaluator: "human",
     achievements: [
-      { id: "a1", taskId: "1", title: "開店準備（レジ立ち上げ）", completed: true, order: 1 },
-      { id: "a2", taskId: "1", title: "午前シフト対応", completed: true, order: 2 },
-      { id: "a3", taskId: "1", title: "午後シフト対応", completed: false, order: 3 },
-      { id: "a4", taskId: "1", title: "締め作業（レジ締め）", completed: false, order: 4 },
+      { id: "a1", taskId: "1", title: "Opening preparation (register startup)", completed: true, order: 1 },
+      { id: "a2", taskId: "1", title: "Morning shift coverage", completed: true, order: 2 },
+      { id: "a3", taskId: "1", title: "Afternoon shift coverage", completed: false, order: 3 },
+      { id: "a4", taskId: "1", title: "Closing (register close-out)", completed: false, order: 4 },
     ],
   },
   {
     id: "2",
-    title: "在庫確認",
-    description: "店舗内の在庫を確認し、不足があれば発注リストに追加する。",
+    title: "Inventory Check",
+    description: "Check in-store inventory and add shortages to the purchase order list.",
     assigneeId: "2",
     status: "pending",
     priority: "medium",
@@ -42,15 +42,15 @@ const initialTasks: Task[] = [
     createdAt: "2026-03-20",
     evaluator: "agent_auto",
     achievements: [
-      { id: "a5", taskId: "2", title: "食品棚の確認", completed: false, order: 1 },
-      { id: "a6", taskId: "2", title: "日用品棚の確認", completed: false, order: 2 },
-      { id: "a7", taskId: "2", title: "発注リスト作成", completed: false, order: 3 },
+      { id: "a5", taskId: "2", title: "Food shelf check", completed: false, order: 1 },
+      { id: "a6", taskId: "2", title: "Sundries shelf check", completed: false, order: 2 },
+      { id: "a7", taskId: "2", title: "Create purchase order list", completed: false, order: 3 },
     ],
   },
   {
     id: "3",
-    title: "清掃業務",
-    description: "店舗内外の清掃。開店前と閉店後に実施。",
+    title: "Store Cleaning",
+    description: "Clean inside and outside the store. Performed before opening and after closing.",
     assigneeId: "",
     status: "pending",
     priority: "low",
@@ -58,9 +58,9 @@ const initialTasks: Task[] = [
     createdAt: "2026-03-20",
     evaluator: "human",
     achievements: [
-      { id: "a8", taskId: "3", title: "店内清掃", completed: false, order: 1 },
-      { id: "a9", taskId: "3", title: "トイレ清掃", completed: false, order: 2 },
-      { id: "a10", taskId: "3", title: "外回り清掃", completed: false, order: 3 },
+      { id: "a8", taskId: "3", title: "Interior cleaning", completed: false, order: 1 },
+      { id: "a9", taskId: "3", title: "Restroom cleaning", completed: false, order: 2 },
+      { id: "a10", taskId: "3", title: "Exterior cleaning", completed: false, order: 3 },
     ],
   },
 ];
