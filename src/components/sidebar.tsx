@@ -14,6 +14,7 @@ const environments = [
 const navItems = [
   { label: "Dashboard", path: "" },
   { label: "Staff", path: "/staff" },
+  { label: "Tasks", path: "/tasks" },
   { label: "Evaluations", path: "/evaluations" },
   { label: "Rewards", path: "/rewards" },
   { label: "Settings", path: "/settings" },
