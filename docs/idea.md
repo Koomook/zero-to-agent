@@ -55,7 +55,7 @@ Staff members select their assigned tasks via `/task` slash command in Slack.
 
 #### 1.3 AI Agent Behavior
 
-- Uses Vercel AI SDK with configurable LLM provider
+- Uses Vercel AI SDK with Google Gemini (multimodal — handles text and images)
 - Maintains conversation context within Slack threads
 - Custom tools defined in `lib/ai.ts` for:
   - Fetching assigned tasks for a user
@@ -108,7 +108,7 @@ Staff members select their assigned tasks via `/task` slash command in Slack.
 
 - **Framework:** Next.js (App Router)
 - **Styling:** Tailwind CSS
-- **AI:** Vercel AI SDK
+- **AI:** Vercel AI SDK + Google Gemini (`@ai-sdk/google`, `gemini-2.0-flash`)
 - **Bot Platform:** Slack (HTTP webhook mode, not WebSocket)
 - **Hosting:** Vercel
 - **Language:** TypeScript
@@ -118,7 +118,7 @@ Staff members select their assigned tasks via `/task` slash command in Slack.
 ```
 SLACK_BOT_TOKEN=xoxb-...
 SLACK_SIGNING_SECRET=...
-OPENAI_API_KEY=...
+GOOGLE_GENERATIVE_AI_API_KEY=...
 ```
 
 ## Reference
