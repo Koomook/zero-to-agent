@@ -3,44 +3,45 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useI18n, localeLabels, type Locale } from "@/lib/i18n";
 
-const environments = [
-  { id: "default", label: "Default" },
-  { id: "store-a", label: "Store A" },
-  { id: "store-b", label: "Store B" },
-  { id: "team-1", label: "Team 1" },
-];
+const environmentKeys = ["default", "storeA", "storeB", "team1"] as const;
+const environmentIds: Record<(typeof environmentKeys)[number], string> = {
+  default: "default",
+  storeA: "store-a",
+  storeB: "store-b",
+  team1: "team-1",
+};
 
-const navItems = [
-  { label: "Dashboard", path: "" },
-  { label: "Staff", path: "/staff" },
-  { label: "Tasks", path: "/tasks" },
-  { label: "Evaluations", path: "/evaluations" },
-  { label: "Rewards", path: "/rewards" },
-  { label: "Settings", path: "/settings" },
-];
+const navKeys = ["dashboard", "staff", "tasks", "evaluations", "rewards", "settings"] as const;
+const navPaths: Record<(typeof navKeys)[number], string> = {
+  dashboard: "",
+  staff: "/staff",
+  tasks: "/tasks",
+  evaluations: "/evaluations",
+  rewards: "/rewards",
+  settings: "/settings",
+};
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { locale, setLocale, t } = useI18n();
 
-  // Extract current id from pathname: /dashboard/[id]/...
   const segments = pathname.split("/").filter(Boolean);
   const currentId = segments.length >= 2 ? segments[1] : "default";
   const basePath = `/dashboard/${currentId}`;
 
-  // Prefetch all environment + nav combinations
   useEffect(() => {
-    for (const env of environments) {
-      for (const item of navItems) {
-        router.prefetch(`/dashboard/${env.id}${item.path}`);
+    for (const key of environmentKeys) {
+      for (const nav of navKeys) {
+        router.prefetch(`/dashboard/${environmentIds[key]}${navPaths[nav]}`);
       }
     }
   }, [router]);
 
   const handleEnvironmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newId = e.target.value;
-    router.push(`/dashboard/${newId}`);
+    router.push(`/dashboard/${e.target.value}`);
   };
 
   return (
@@ -51,20 +52,20 @@ export default function Sidebar() {
           onChange={handleEnvironmentChange}
           className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm font-bold dark:border-zinc-700 dark:bg-zinc-900"
         >
-          {environments.map((env) => (
-            <option key={env.id} value={env.id}>
-              {env.label}
+          {environmentKeys.map((key) => (
+            <option key={key} value={environmentIds[key]}>
+              {t.env[key]}
             </option>
           ))}
         </select>
       </div>
       <nav className="flex-1 space-y-1 p-3">
-        {navItems.map((item) => {
-          const href = `${basePath}${item.path}`;
+        {navKeys.map((key) => {
+          const href = `${basePath}${navPaths[key]}`;
           const isActive = pathname === href;
           return (
             <Link
-              key={item.path}
+              key={key}
               href={href}
               className={`block rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                 isActive
@@ -72,11 +73,24 @@ export default function Sidebar() {
                   : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-50"
               }`}
             >
-              {item.label}
+              {t.nav[key]}
             </Link>
           );
         })}
       </nav>
+      <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">
+        <select
+          value={locale}
+          onChange={(e) => setLocale(e.target.value as Locale)}
+          className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        >
+          {(Object.keys(localeLabels) as Locale[]).map((l) => (
+            <option key={l} value={l}>
+              {localeLabels[l]}
+            </option>
+          ))}
+        </select>
+      </div>
     </aside>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { Task, Staff } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 import TaskDetailModal from "@/components/task-detail-modal";
 
 const staffList: Staff[] = [
@@ -22,6 +23,7 @@ const initialTasks: Task[] = [
     priority: "high",
     dueDate: "2026-03-25",
     createdAt: "2026-03-20",
+    evaluator: "human",
     achievements: [
       { id: "a1", taskId: "1", title: "開店準備（レジ立ち上げ）", completed: true, order: 1 },
       { id: "a2", taskId: "1", title: "午前シフト対応", completed: true, order: 2 },
@@ -38,6 +40,7 @@ const initialTasks: Task[] = [
     priority: "medium",
     dueDate: "2026-03-24",
     createdAt: "2026-03-20",
+    evaluator: "agent_auto",
     achievements: [
       { id: "a5", taskId: "2", title: "食品棚の確認", completed: false, order: 1 },
       { id: "a6", taskId: "2", title: "日用品棚の確認", completed: false, order: 2 },
@@ -53,6 +56,7 @@ const initialTasks: Task[] = [
     priority: "low",
     dueDate: "2026-03-23",
     createdAt: "2026-03-20",
+    evaluator: "human",
     achievements: [
       { id: "a8", taskId: "3", title: "店内清掃", completed: false, order: 1 },
       { id: "a9", taskId: "3", title: "トイレ清掃", completed: false, order: 2 },
@@ -70,6 +74,7 @@ function parseCSV(text: string): Task[] {
   const descIdx = headers.indexOf("description");
   const priorityIdx = headers.indexOf("priority");
   const dueDateIdx = headers.indexOf("dueDate");
+  const evaluatorIdx = headers.indexOf("evaluator");
   const achievementsIdx = headers.indexOf("achievements");
 
   if (titleIdx === -1) return [];
@@ -94,6 +99,10 @@ function parseCSV(text: string): Task[] {
           : "medium",
       dueDate: dueDateIdx !== -1 ? cols[dueDateIdx] || "" : "",
       createdAt: new Date().toISOString().split("T")[0],
+      evaluator:
+        evaluatorIdx !== -1 && ["human", "agent_auto"].includes(cols[evaluatorIdx])
+          ? (cols[evaluatorIdx] as Task["evaluator"])
+          : "human",
       achievements: achievementTitles.map((title, j) => ({
         id: `${taskId}-a${j}`,
         taskId,
@@ -106,23 +115,24 @@ function parseCSV(text: string): Task[] {
 }
 
 export default function TasksPage() {
+  const { t } = useI18n();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [assigningTaskId, setAssigningTaskId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getStaffName = (id: string) =>
-    staffList.find((s) => s.id === id)?.name ?? "未割当";
+    staffList.find((s) => s.id === id)?.name ?? t.common.unassigned;
 
   const handleAssign = (taskId: string, staffId: string) => {
     setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, assigneeId: staffId } : t))
+      prev.map((tk) => (tk.id === taskId ? { ...tk, assigneeId: staffId } : tk))
     );
     setAssigningTaskId(null);
   };
 
   const handleUpdateTask = (updated: Task) => {
-    setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    setTasks((prev) => prev.map((tk) => (tk.id === updated.id ? updated : tk)));
     setSelectedTask(updated);
   };
 
@@ -151,10 +161,16 @@ export default function TasksPage() {
     high: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   };
 
+  const priorityLabel = {
+    high: t.tasks.priorityHigh,
+    medium: t.tasks.priorityMedium,
+    low: t.tasks.priorityLow,
+  };
+
   return (
     <div className="flex-1 p-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Tasks</h1>
+        <h1 className="text-2xl font-bold">{t.tasks.title}</h1>
         <div>
           <input
             ref={fileInputRef}
@@ -167,7 +183,7 @@ export default function TasksPage() {
             onClick={() => fileInputRef.current?.click()}
             className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            CSVアップロード
+            {t.tasks.csvUpload}
           </button>
         </div>
       </div>
@@ -184,9 +200,12 @@ export default function TasksPage() {
             >
               <div className="flex items-center gap-3">
                 <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${priorityColor[task.priority]}`}>
-                  {task.priority === "high" ? "高" : task.priority === "medium" ? "中" : "低"}
+                  {priorityLabel[task.priority]}
                 </span>
                 <span>{task.title}</span>
+                <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${task.evaluator === "agent_auto" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"}`}>
+                  {task.evaluator === "agent_auto" ? t.common.agentAuto : t.common.human}
+                </span>
                 {total > 0 && (
                   <span className="text-xs text-zinc-400">
                     {done}/{total}
@@ -195,7 +214,7 @@ export default function TasksPage() {
               </div>
               <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                 <span className="text-zinc-500 dark:text-zinc-400">
-                  {task.assigneeId ? getStaffName(task.assigneeId) : "未割当"}
+                  {task.assigneeId ? getStaffName(task.assigneeId) : t.common.unassigned}
                 </span>
                 {assigningTaskId === task.id ? (
                   <select
@@ -205,7 +224,7 @@ export default function TasksPage() {
                     onChange={(e) => handleAssign(task.id, e.target.value)}
                     onBlur={() => setAssigningTaskId(null)}
                   >
-                    <option value="">未割当</option>
+                    <option value="">{t.common.unassigned}</option>
                     {staffList.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name}
@@ -217,7 +236,7 @@ export default function TasksPage() {
                     onClick={() => setAssigningTaskId(task.id)}
                     className="rounded-md bg-zinc-200 px-3 py-1 text-xs font-medium transition-colors hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700"
                   >
-                    割当
+                    {t.common.assign}
                   </button>
                 )}
               </div>

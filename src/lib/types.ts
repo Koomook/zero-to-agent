@@ -1,5 +1,6 @@
 export type Priority = "low" | "medium" | "high";
 export type TaskStatus = "pending" | "in_progress" | "completed";
+export type EvaluatorType = "human" | "agent_auto";
 
 export interface Achievement {
   id: string;
@@ -18,6 +19,7 @@ export interface Task {
   priority: Priority;
   dueDate: string;
   createdAt: string;
+  evaluator: EvaluatorType;
   achievements: Achievement[];
 }
 

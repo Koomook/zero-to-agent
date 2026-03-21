@@ -1,3 +1,7 @@
+"use client";
+
+import { useI18n } from "@/lib/i18n";
+
 const mockStaff = [
   { id: "1", name: "田中 太郎" },
   { id: "2", name: "佐藤 花子" },
@@ -7,9 +11,11 @@ const mockStaff = [
 ];
 
 export default function StaffPage() {
+  const { t } = useI18n();
+
   return (
     <div className="flex-1 p-8">
-      <h1 className="mb-6 text-2xl font-bold">Staff</h1>
+      <h1 className="mb-6 text-2xl font-bold">{t.staffPage.title}</h1>
       <ul className="space-y-2">
         {mockStaff.map((staff) => (
           <li

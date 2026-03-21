@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Task, Staff, Priority, TaskStatus } from "@/lib/types";
+import { Task, Staff, Priority, TaskStatus, EvaluatorType } from "@/lib/types";
+import { useI18n } from "@/lib/i18n";
 
 interface Props {
   task: Task;
@@ -16,6 +17,7 @@ export default function TaskDetailModal({
   onClose,
   onUpdate,
 }: Props) {
+  const { t } = useI18n();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task);
   const [newAchievement, setNewAchievement] = useState("");
@@ -70,11 +72,15 @@ export default function TaskDetailModal({
   const completedCount = task.achievements.filter((a) => a.completed).length;
   const totalCount = task.achievements.length;
 
-  const priorityLabel = { low: "低", medium: "中", high: "高" };
+  const priorityLabel = {
+    low: t.tasks.priorityLow,
+    medium: t.tasks.priorityMedium,
+    high: t.tasks.priorityHigh,
+  };
   const statusLabel = {
-    pending: "未着手",
-    in_progress: "進行中",
-    completed: "完了",
+    pending: t.tasks.statusPending,
+    in_progress: t.tasks.statusInProgress,
+    completed: t.tasks.statusCompleted,
   };
 
   const inputClass =
@@ -123,7 +129,7 @@ export default function TaskDetailModal({
 
         <div className="mb-4 grid grid-cols-2 gap-3 text-sm">
           <div>
-            <span className="text-zinc-500">担当者: </span>
+            <span className="text-zinc-500">{t.tasks.assignee}: </span>
             {editing ? (
               <select
                 className={inputClass + " mt-1"}
@@ -132,7 +138,7 @@ export default function TaskDetailModal({
                   setDraft({ ...draft, assigneeId: e.target.value })
                 }
               >
-                <option value="">未割当</option>
+                <option value="">{t.common.unassigned}</option>
                 {staffList.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
@@ -140,11 +146,11 @@ export default function TaskDetailModal({
                 ))}
               </select>
             ) : (
-              staffList.find((s) => s.id === task.assigneeId)?.name ?? "未割当"
+              staffList.find((s) => s.id === task.assigneeId)?.name ?? t.common.unassigned
             )}
           </div>
           <div>
-            <span className="text-zinc-500">優先度: </span>
+            <span className="text-zinc-500">{t.tasks.priority}: </span>
             {editing ? (
               <select
                 className={inputClass + " mt-1"}
@@ -153,16 +159,16 @@ export default function TaskDetailModal({
                   setDraft({ ...draft, priority: e.target.value as Priority })
                 }
               >
-                <option value="low">低</option>
-                <option value="medium">中</option>
-                <option value="high">高</option>
+                <option value="low">{t.tasks.priorityLow}</option>
+                <option value="medium">{t.tasks.priorityMedium}</option>
+                <option value="high">{t.tasks.priorityHigh}</option>
               </select>
             ) : (
               priorityLabel[task.priority]
             )}
           </div>
           <div>
-            <span className="text-zinc-500">ステータス: </span>
+            <span className="text-zinc-500">{t.tasks.status}: </span>
             {editing ? (
               <select
                 className={inputClass + " mt-1"}
@@ -171,16 +177,16 @@ export default function TaskDetailModal({
                   setDraft({ ...draft, status: e.target.value as TaskStatus })
                 }
               >
-                <option value="pending">未着手</option>
-                <option value="in_progress">進行中</option>
-                <option value="completed">完了</option>
+                <option value="pending">{t.tasks.statusPending}</option>
+                <option value="in_progress">{t.tasks.statusInProgress}</option>
+                <option value="completed">{t.tasks.statusCompleted}</option>
               </select>
             ) : (
               statusLabel[task.status]
             )}
           </div>
           <div>
-            <span className="text-zinc-500">期限: </span>
+            <span className="text-zinc-500">{t.tasks.dueDate}: </span>
             {editing ? (
               <input
                 type="date"
@@ -191,14 +197,33 @@ export default function TaskDetailModal({
                 }
               />
             ) : (
-              task.dueDate || "未設定"
+              task.dueDate || t.common.notSet
+            )}
+          </div>
+          <div>
+            <span className="text-zinc-500">{t.tasks.evaluator}: </span>
+            {editing ? (
+              <select
+                className={inputClass + " mt-1"}
+                value={draft.evaluator}
+                onChange={(e) =>
+                  setDraft({ ...draft, evaluator: e.target.value as EvaluatorType })
+                }
+              >
+                <option value="human">{t.common.human}</option>
+                <option value="agent_auto">{t.common.agentAuto}</option>
+              </select>
+            ) : (
+              <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${task.evaluator === "agent_auto" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"}`}>
+                {task.evaluator === "agent_auto" ? t.common.agentAuto : t.common.human}
+              </span>
             )}
           </div>
         </div>
 
         <div>
           <div className="mb-2 flex items-center justify-between text-sm font-medium">
-            <span>達成項目</span>
+            <span>{t.tasks.achievements}</span>
             {totalCount > 0 && (
               <span className="text-zinc-500">
                 {completedCount}/{totalCount}
@@ -245,7 +270,7 @@ export default function TaskDetailModal({
                         }}
                         className="text-xs text-red-400 hover:text-red-600"
                       >
-                        削除
+                        {t.common.delete}
                       </button>
                     )}
                   </label>
@@ -256,7 +281,7 @@ export default function TaskDetailModal({
             <div className="mt-2 flex gap-2">
               <input
                 className={inputClass + " flex-1"}
-                placeholder="新しい達成項目..."
+                placeholder={t.tasks.newAchievement}
                 value={newAchievement}
                 onChange={(e) => setNewAchievement(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && addAchievement()}
@@ -265,7 +290,7 @@ export default function TaskDetailModal({
                 onClick={addAchievement}
                 className="rounded-md bg-zinc-200 px-3 py-1 text-sm font-medium hover:bg-zinc-300 dark:bg-zinc-800 dark:hover:bg-zinc-700"
               >
-                追加
+                {t.common.add}
               </button>
             </div>
           )}
@@ -278,13 +303,13 @@ export default function TaskDetailModal({
                 onClick={handleCancel}
                 className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
               >
-                キャンセル
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleSave}
                 className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
               >
-                保存
+                {t.common.save}
               </button>
             </>
           ) : (
@@ -292,7 +317,7 @@ export default function TaskDetailModal({
               onClick={() => setEditing(true)}
               className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
-              編集
+              {t.common.edit}
             </button>
           )}
         </div>
