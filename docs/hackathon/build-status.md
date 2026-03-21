@@ -45,12 +45,36 @@
 | 2.6 | 평가 결과 → DB 저장 (ai_score, ai_evaluation, status) | DONE | updateSubmission() |
 | 2.7 | 평가 결과 → Slack 스레드에 점수/피드백 응답 | DONE | formatEvaluation() → thread.post() |
 | 2.8 | 이미지를 Slack으로 발송 (thread.post with files) | DONE | sendExpectedImage() — Task 할당 시 Expected image 첨부파일로 전송 |
-| **2.9** | **Gemini 이미지 생성 (가이드 이미지)** | **TODO** | **텍스트 가이드만 있고, 시각적 가이드 이미지 생성 없음. Imagen API 또는 Gemini image gen 필요** |
+| **2.9** | **Gemini 가이드 이미지 생성** | **TODO** | **Before 사진 + Expected 사진 → Gemini가 "이렇게 되어야 합니다" 이미지 GENERATE. gemini-2.5-flash-image 또는 gemini-3.1-flash-image-preview (Nano Banana 2)** |
 | 2.10 | getNextPendingTask() 스마트 Task 할당 | DONE | 이미 제출된 Task 건너뛰기 + thread별 Task 유지 |
 | 2.11 | Task별 시스템 프롬프트 강화 | DONE | SHELF_COACH_SYSTEM + 구조화된 analyze/evaluate 지시 |
 | 2.12 | 이미지 mimeType 동적 처리 | DONE | attachment.mimeType 그대로 전달 |
 | 2.13 | Food Stock 데모 시나리오 seed data 보강 | DONE | 가이드 텍스트 구체화 (위치별 지시, 우선순위 등) |
 | 2.14 | 에러 핸들링 (Gemini/업로드 실패) | DONE | try-catch + 사용자 친화적 에러 메시지 |
+
+---
+
+## Phase 2.5: 스케줄러 + AI 이미지 생성 (시나리오 핵심)
+
+시나리오 원래 의도 구현 — 시스템 선발송 + AI 가이드 이미지 생성
+
+**시나리오 플로우 (현재 → 목표)**:
+```
+현재: Staff가 봇 멘션 → Task 배정 → Expected 원본 보여줌 → 텍스트 가이드
+목표: 시스템이 1h마다 자동 발송 → Staff가 Before 사진 업로드
+      → AI가 Before를 분석해서 "이렇게 되어야 해" 가이드 이미지를 GENERATE
+      → Staff가 After 사진 → AI 평가 → Manager 검수
+```
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| **2.5.1** | **Vercel Cron Job 설정** | **TODO** | **vercel.json cron + /api/cron/check-tasks + CRON_SECRET 인증** |
+| **2.5.2** | **Cron에서 Chat SDK로 Slack 채널에 프로액티브 메시지 발송** | **TODO** | **bot.initialize() → bot.channel("slack:CHANNEL_ID").post() → 각 Task별 새 스레드 생성** |
+| **2.5.3** | **Cron 발송 스레드와 Submission 연결** | **TODO** | **시스템이 만든 스레드의 thread_id를 DB에 저장 → Staff가 해당 스레드에 이미지 올리면 자동 매칭** |
+| **2.5.4** | **Gemini 가이드 이미지 생성 (generateGuideImage)** | **TODO** | **Before + Expected + text_guide → gemini-2.5-flash (responseModalities: IMAGE) → 가이드 이미지 생성** |
+| **2.5.5** | **가이드 이미지를 Slack 스레드에 첨부 발송** | **TODO** | **생성된 이미지를 thread.post({ files }) + Supabase Storage 저장** |
+| **2.5.6** | **대시보드 "Send Check Now" 버튼** | **TODO** | **해커톤 데모용 수동 트리거. /api/cron/check-tasks를 대시보드에서 호출** |
+| **2.5.7** | **SLACK_CHANNEL_ID env 설정** | **TODO** | **Cron 발송 대상 채널 ID** |
 
 ---
 
@@ -99,18 +123,19 @@ Chat SDK 멀티플랫폼 — "코드 한 줄 안 바꾸고 3개 플랫폼"
 | ~~getNextPendingTask() 항상 같은 Task 반환~~ | `src/lib/bot.ts` | ~~HIGH~~ | **FIXED** |
 | ~~mimeType `image/jpeg` 하드코딩~~ | `src/lib/gemini.ts` | ~~MEDIUM~~ | **FIXED** |
 | ~~이미지 발송 미구현~~ | `src/lib/bot.ts` | ~~HIGH~~ | **FIXED** |
-| Gemini 가이드 이미지 생성 미구현 | `src/lib/gemini.ts` | LOW — nice-to-have | OPEN |
+| Gemini 가이드 이미지 생성 미구현 | `src/lib/gemini.ts` | **HIGH** — 시나리오 핵심 | Phase 2.5에서 구현 예정 |
+| 시스템 선발송 스케줄러 없음 | N/A | **HIGH** — 시나리오 핵심 | Phase 2.5에서 구현 예정 |
 
 ---
 
 ## Summary
 
 ```
-Phase 1 (Foundation):     17/17 DONE  ████████████████ 100%
-Phase 2 (Image Flow):     13/14 DONE  ███████████████░  93%
-Phase 3 (Dashboard):       5/11 DONE  ████████░░░░░░░░  45%
-Phase 4 (Multi-Platform):  4/9  DONE  ███████░░░░░░░░░  44%
+Phase 1   (Foundation):        17/17 DONE  ████████████████ 100%
+Phase 2   (Image Flow):        13/14 DONE  ███████████████░  93%
+Phase 2.5 (Scheduler+ImgGen):   0/7  TODO  ░░░░░░░░░░░░░░░░   0%  ← NEXT
+Phase 3   (Dashboard):          5/11 DONE  ████████░░░░░░░░  45%
+Phase 4   (Multi-Platform):     4/9  DONE  ███████░░░░░░░░░  44%
 ```
 
-**Phase 2 남은 것**: 2.9 Gemini 이미지 생성 (가이드 이미지) — nice-to-have
-**Next Priority: Phase 3** — Dashboard 고도화 (채팅 히스토리, Task 생성 폼, Payout 액션)
+**Next Priority: Phase 2.5** — 스케줄러 자동 발송 + Gemini 가이드 이미지 생성 (시나리오 핵심 차별화)
