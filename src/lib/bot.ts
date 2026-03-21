@@ -3,6 +3,7 @@ import { createSlackAdapter } from "@chat-adapter/slack";
 import { createTelegramAdapter } from "@chat-adapter/telegram";
 import { createWhatsAppAdapter } from "@chat-adapter/whatsapp";
 import { createMemoryState } from "@chat-adapter/state-memory";
+import { createPostgresState } from "@chat-adapter/state-pg";
 import { generateText } from "ai";
 import { Chat } from "chat";
 
@@ -192,7 +193,9 @@ function createBot() {
   const bot = new Chat({
     userName: "shelf-coach",
     adapters,
-    state: createMemoryState(),
+    state: process.env.POSTGRES_URL
+      ? createPostgresState()
+      : createMemoryState(),
   });
 
   bot.onNewMention(async (thread, message) => {

@@ -72,14 +72,31 @@ export async function GET(req: NextRequest) {
     try {
       const message = await channel.post(formatTaskPrompt(task));
 
-      const threadId =
-        (message as unknown as { id?: string })?.id ?? `cron-${Date.now()}-${task.id.slice(0, 8)}`;
+      // Extract thread ID from the sent message
+      const threadId = message?.id
+        ?? `cron-${Date.now()}-${task.id.slice(0, 8)}`;
+
+      // Build the Chat SDK thread ID format: "slack:CHANNEL:TS"
+      const slackThreadId = `slack:${channelId}:${threadId}`;
+
+      // Subscribe to this thread so onSubscribedMessage fires
+      // when staff replies with images
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const stateAdapter = (bot as any)._stateAdapter;
+        if (stateAdapter?.subscribe) {
+          await stateAdapter.subscribe(slackThreadId);
+          console.log(`[cron] Subscribed to thread: ${slackThreadId}`);
+        }
+      } catch (subErr) {
+        console.error(`[cron] Subscribe failed for ${task.title}:`, subErr);
+      }
 
       await getSupabase()
         .from("task_submissions")
         .insert({
           task_id: task.id,
-          thread_id: threadId,
+          thread_id: slackThreadId,
           platform: "slack",
           staff_name: null,
           status: "pending",
