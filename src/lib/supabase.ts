@@ -25,13 +25,14 @@ export function getSupabase(): SupabaseClient {
 export async function uploadImage(
   buffer: Buffer,
   filename: string,
+  contentType: string = "image/jpeg",
 ): Promise<string> {
   const supabase = getSupabase();
   const path = `submissions/${Date.now()}-${filename}`;
 
   const { error } = await supabase.storage
     .from("shelf-coach")
-    .upload(path, buffer, { contentType: "image/jpeg", upsert: false });
+    .upload(path, buffer, { contentType, upsert: false });
 
   if (error) throw new Error(`Upload failed: ${error.message}`);
 
