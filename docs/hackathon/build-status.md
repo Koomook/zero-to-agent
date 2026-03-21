@@ -44,13 +44,13 @@
 | 2.5 | After 이미지 → Gemini 멀티모달 평가 | DONE | evaluateAfterImage() → score(0-100) + evaluation |
 | 2.6 | 평가 결과 → DB 저장 (ai_score, ai_evaluation, status) | DONE | updateSubmission() |
 | 2.7 | 평가 결과 → Slack 스레드에 점수/피드백 응답 | DONE | formatEvaluation() → thread.post() |
-| **2.8** | **이미지를 Slack으로 발송 (thread.post with files)** | **TODO** | **Chat SDK files: [] 지원하지만 미사용. Expected image를 스레드에 보여줘야 함** |
+| 2.8 | 이미지를 Slack으로 발송 (thread.post with files) | DONE | sendExpectedImage() — Task 할당 시 Expected image 첨부파일로 전송 |
 | **2.9** | **Gemini 이미지 생성 (가이드 이미지)** | **TODO** | **텍스트 가이드만 있고, 시각적 가이드 이미지 생성 없음. Imagen API 또는 Gemini image gen 필요** |
-| **2.10** | **getNextPendingTask() 스마트 Task 할당** | **TODO** | **현재 sort_order 첫 번째만 반환 — 이미 제출된 Task 필터링 없음. 같은 Task만 계속 할당됨** |
-| **2.11** | **Task별 시스템 프롬프트 강화** | **TODO** | **analyzeBeforeImage/evaluateAfterImage에 system: 필드 미사용. 인라인 지시만 있음** |
-| **2.12** | **이미지 mimeType 동적 처리** | **TODO** | **현재 image/jpeg 하드코딩. PNG/WebP 등 Slack 업로드 형식 대응 필요** |
-| **2.13** | **Food Stock 데모 시나리오 seed data 보강** | **TODO** | **Expected images 없음. 데모용 사진 업로드 + 가이드 텍스트 구체화** |
-| **2.14** | **에러 핸들링 (Gemini 실패, 업로드 실패)** | **TODO** | **현재 throw만 함. 사용자에게 친화적 에러 메시지 필요** |
+| 2.10 | getNextPendingTask() 스마트 Task 할당 | DONE | 이미 제출된 Task 건너뛰기 + thread별 Task 유지 |
+| 2.11 | Task별 시스템 프롬프트 강화 | DONE | SHELF_COACH_SYSTEM + 구조화된 analyze/evaluate 지시 |
+| 2.12 | 이미지 mimeType 동적 처리 | DONE | attachment.mimeType 그대로 전달 |
+| 2.13 | Food Stock 데모 시나리오 seed data 보강 | DONE | 가이드 텍스트 구체화 (위치별 지시, 우선순위 등) |
+| 2.14 | 에러 핸들링 (Gemini/업로드 실패) | DONE | try-catch + 사용자 친화적 에러 메시지 |
 
 ---
 
@@ -94,11 +94,12 @@ Chat SDK 멀티플랫폼 — "코드 한 줄 안 바꾸고 3개 플랫폼"
 
 ## Known Bugs
 
-| Bug | File | Line | Severity |
-|-----|------|------|----------|
-| getNextPendingTask() 항상 같은 Task 반환 | `src/lib/bot.ts` | 53-61 | **HIGH** — 데모 깨짐 |
-| mimeType `image/jpeg` 하드코딩 | `src/lib/gemini.ts` | 38, 87 | MEDIUM — PNG 업로드 시 문제 가능 |
-| 이미지 발송 미구현 | `src/lib/bot.ts` | 전체 | **HIGH** — 시나리오 핵심 누락 |
+| Bug | File | Severity | Status |
+|-----|------|----------|--------|
+| ~~getNextPendingTask() 항상 같은 Task 반환~~ | `src/lib/bot.ts` | ~~HIGH~~ | **FIXED** |
+| ~~mimeType `image/jpeg` 하드코딩~~ | `src/lib/gemini.ts` | ~~MEDIUM~~ | **FIXED** |
+| ~~이미지 발송 미구현~~ | `src/lib/bot.ts` | ~~HIGH~~ | **FIXED** |
+| Gemini 가이드 이미지 생성 미구현 | `src/lib/gemini.ts` | LOW — nice-to-have | OPEN |
 
 ---
 
@@ -106,9 +107,10 @@ Chat SDK 멀티플랫폼 — "코드 한 줄 안 바꾸고 3개 플랫폼"
 
 ```
 Phase 1 (Foundation):     17/17 DONE  ████████████████ 100%
-Phase 2 (Image Flow):      7/14 DONE  ████████░░░░░░░░  50%
+Phase 2 (Image Flow):     13/14 DONE  ███████████████░  93%
 Phase 3 (Dashboard):       5/11 DONE  ████████░░░░░░░░  45%
 Phase 4 (Multi-Platform):  4/9  DONE  ███████░░░░░░░░░  44%
 ```
 
-**Next Priority: Phase 2 완성** — 이미지 발송, Task 할당 로직 수정, 데모 시나리오 보강
+**Phase 2 남은 것**: 2.9 Gemini 이미지 생성 (가이드 이미지) — nice-to-have
+**Next Priority: Phase 3** — Dashboard 고도화 (채팅 히스토리, Task 생성 폼, Payout 액션)
