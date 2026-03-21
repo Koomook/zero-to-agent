@@ -12,8 +12,11 @@ create table if not exists tasks (
   id uuid primary key default gen_random_uuid(),
   task_list_id uuid references task_lists(id) on delete cascade,
   title text not null,
+  description text,
   text_guide text,
   expected_image_url text,
+  reward_amount numeric default 0,
+  assigned_to text,
   sort_order int default 0,
   created_at timestamptz default now()
 );
@@ -28,6 +31,7 @@ create table if not exists task_submissions (
   before_image_url text,
   after_image_url text,
   ai_guide text,
+  ai_guide_image_url text,
   ai_score int,
   ai_evaluation text,
   status text default 'pending' check (status in ('pending', 'reviewed', 'ok', 'fail')),

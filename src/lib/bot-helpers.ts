@@ -42,10 +42,11 @@ export function pickNextPendingTask(
 }
 
 export function formatTaskPrompt(
-  task: Pick<Task, "title" | "text_guide">,
+  task: Pick<Task, "title" | "text_guide" | "assigned_to">,
 ): string {
+  const assignee = task.assigned_to ? `담당: ${task.assigned_to} | ` : "";
   const lines = [
-    `**${task.title}** - Time to check!`,
+    `**${assignee}${task.title}** - Time to check!`,
     "",
     task.text_guide ? `Guide: ${task.text_guide}` : "",
     "",

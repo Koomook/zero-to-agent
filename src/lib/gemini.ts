@@ -1,8 +1,10 @@
 import { google } from "@ai-sdk/google";
-import { generateText } from "ai";
+import { generateObject, generateText } from "ai";
+import { z } from "zod";
+import type { GeneratedTaskList } from "./types";
 
-const SHELF_COACH_SYSTEM = [
-  "You are Shelf Coach, an AI-powered operational assistant for on-site task management.",
+const KANI_SYSTEM = [
+  "You are Kani, an AI-powered operational assistant for on-site task management.",
   "You work with staff at cafes, restaurants, retail stores, and shared spaces.",
   "Your role is to analyze photos of the current state, compare against the expected state,",
   "and provide clear, actionable guidance to help staff meet quality standards.",
@@ -82,7 +84,7 @@ export async function analyzeBeforeImage(
 
   const result = await generateText({
     model: google("gemini-2.5-flash"),
-    system: SHELF_COACH_SYSTEM,
+    system: KANI_SYSTEM,
     messages: [{ role: "user", content }],
   });
 
@@ -140,7 +142,7 @@ export async function evaluateAfterImage(
 
   const result = await generateText({
     model: google("gemini-2.5-flash"),
-    system: SHELF_COACH_SYSTEM,
+    system: KANI_SYSTEM,
     messages: [{ role: "user", content }],
   });
 
@@ -159,6 +161,57 @@ export type GuideImageResult = {
   guideText: string;
   mimeType: string;
 };
+
+const TaskListSchema = z.object({
+  name: z.string().describe("Short descriptive name for this task list"),
+  tasks: z
+    .array(
+      z.object({
+        title: z.string().describe("Short, specific task title (what to check)"),
+        text_guide: z
+          .string()
+          .describe(
+            "Exactly 3 bullet points starting with '• ', each max 10 words, short actionable phrases",
+          ),
+        assigned_to: z
+          .string()
+          .nullable()
+          .describe("Staff member name assigned to this task, or null if no staff specified"),
+      }),
+    )
+    .min(1)
+    .max(15),
+});
+
+export async function generateTaskList(
+  prompt: string,
+): Promise<GeneratedTaskList> {
+  const result = await generateObject({
+    model: google("gemini-3-flash-preview"),
+    schema: TaskListSchema,
+    system: [
+      "You are Kani, an AI operational assistant for on-site venue management.",
+      "Generate a practical task list based on the manager's description.",
+      "Each task must be a specific, photo-verifiable check.",
+      "",
+      "STRICT FORMAT RULES for text_guide:",
+      "- Exactly 3 bullet points, no more, no less.",
+      "- Each bullet starts with '• ' and is max 10 words.",
+      "- Short, actionable phrases only. No full sentences.",
+      "- Example: '• Check food trays are full\\n• Wipe table surfaces clean\\n• Restock napkins and plates'",
+      "",
+      "STAFF ASSIGNMENT RULES:",
+      "- If the user mentions staff names (e.g., 'Staff: Alice, Bob'), distribute tasks across them in round-robin order using the assigned_to field.",
+      "- If no staff names are mentioned, set assigned_to to null for ALL tasks.",
+      "- Do NOT invent or guess staff names that the user did not provide.",
+      "",
+      "Keep task titles short (max 6 words).",
+      "Write in the same language as the user's prompt.",
+    ].join("\n"),
+    prompt: `Create a task list for this situation: ${prompt}`,
+  });
+  return result.object;
+}
 
 export async function generateGuideImage(
   beforeImageBuffer: Buffer,
@@ -225,7 +278,7 @@ export async function generateGuideImage(
     );
 
     if (!imageFile) {
-      console.warn("[shelf-coach] Gemini returned no image");
+      console.warn("[kani] Gemini returned no image");
       return null;
     }
 
@@ -235,7 +288,7 @@ export async function generateGuideImage(
       mimeType: imageFile.mediaType ?? "image/png",
     };
   } catch (e) {
-    console.error("[shelf-coach] Guide image generation failed:", e);
+    console.error("[kani] Guide image generation failed:", e);
     return null;
   }
 }
