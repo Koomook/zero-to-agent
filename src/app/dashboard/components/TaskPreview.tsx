@@ -104,12 +104,12 @@ export function TaskPreview({
                 {task.text_guide}
               </p>
               <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 11, color: 'var(--muted)', flexShrink: 0 }}>담당:</span>
+                <span style={{ fontSize: 11, color: 'var(--muted)', flexShrink: 0 }}>Assigned:</span>
                 <input
                   type="text"
                   value={task.assigned_to ?? ""}
                   onChange={(e) => onUpdateTask(i, { ...task, assigned_to: e.target.value || null })}
-                  placeholder="미배정"
+                  placeholder="Unassigned"
                   style={{
                     ...inputStyle,
                     padding: '4px 8px',

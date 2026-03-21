@@ -60,7 +60,7 @@ export const TaskCard = memo(function TaskCard({
           fontWeight: 500,
           marginTop: 4,
         }}>
-          담당: {task.assigned_to}
+          Assigned: {task.assigned_to}
         </span>
       ) : (
         <span style={{
@@ -72,7 +72,7 @@ export const TaskCard = memo(function TaskCard({
           fontSize: 11,
           marginTop: 4,
         }}>
-          미배정
+          Unassigned
         </span>
       )}
 
