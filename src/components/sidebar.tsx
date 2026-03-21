@@ -13,13 +13,13 @@ const environmentIds: Record<(typeof environmentKeys)[number], string> = {
   team1: "team-1",
 };
 
-const navKeys = ["dashboard", "staff", "tasks", "evaluations", "rewards", "settings"] as const;
+const navKeys = ["dashboard", "staff", "tasks", "evaluations", "agent", "settings"] as const;
 const navPaths: Record<(typeof navKeys)[number], string> = {
   dashboard: "",
   staff: "/staff",
   tasks: "/tasks",
   evaluations: "/evaluations",
-  rewards: "/rewards",
+  agent: "/agent",
   settings: "/settings",
 };
 

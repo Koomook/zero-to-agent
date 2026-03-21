@@ -219,6 +219,36 @@ export default function TaskDetailModal({
               </span>
             )}
           </div>
+          <div>
+            <span className="text-zinc-500">{t.rewards.hours}: </span>
+            {editing ? (
+              <input
+                type="number"
+                className={inputClass + " mt-1"}
+                value={draft.rewardHours}
+                onChange={(e) =>
+                  setDraft({ ...draft, rewardHours: Number(e.target.value) })
+                }
+              />
+            ) : (
+              task.rewardHours > 0 ? `${task.rewardHours}h` : t.common.notSet
+            )}
+          </div>
+          <div>
+            <span className="text-zinc-500">{t.rewards.amount}: </span>
+            {editing ? (
+              <input
+                type="number"
+                className={inputClass + " mt-1"}
+                value={draft.rewardAmount}
+                onChange={(e) =>
+                  setDraft({ ...draft, rewardAmount: Number(e.target.value) })
+                }
+              />
+            ) : (
+              task.rewardAmount > 0 ? `$${task.rewardAmount}` : t.common.notSet
+            )}
+          </div>
         </div>
 
         <div>

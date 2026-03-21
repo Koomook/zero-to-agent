@@ -20,7 +20,18 @@ export interface Task {
   dueDate: string;
   createdAt: string;
   evaluator: EvaluatorType;
+  rewardHours: number;
+  rewardAmount: number;
   achievements: Achievement[];
+}
+
+export interface Reward {
+  id: string;
+  taskId: string;
+  hours: number;
+  amount: number;
+  note: string;
+  createdAt: string;
 }
 
 export interface Staff {

@@ -1,9 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
 
 type EvaluationStatus = "pending" | "approved" | "rejected" | "agent_auto" | "agent_approved" | "agent_rejected";
+type EvaluationRating = "good" | "bad" | null;
+type EvaluationRatingField = "conversationRating" | "agentHistoryRating";
 
 interface ChatMessage {
   id: string;
@@ -19,6 +22,8 @@ interface Evaluation {
   taskTitle: string;
   status: EvaluationStatus;
   chatLog: ChatMessage[];
+  conversationRating: EvaluationRating;
+  agentHistoryRating: EvaluationRating;
 }
 
 const initialEvaluations: Evaluation[] = [
@@ -27,6 +32,8 @@ const initialEvaluations: Evaluation[] = [
     staffName: "Taro Tanaka",
     taskTitle: "Cash Register Operation",
     status: "pending",
+    conversationRating: null,
+    agentHistoryRating: null,
     chatLog: [
       { id: "m1", sender: "staff", text: "Opening preparation for the register is complete.", timestamp: "09:00" },
       { id: "m2", sender: "agent", text: "Confirmed. Is the initial register amount correct?", timestamp: "09:01" },
@@ -41,6 +48,8 @@ const initialEvaluations: Evaluation[] = [
     staffName: "Hanako Sato",
     taskTitle: "Inventory Check",
     status: "pending",
+    conversationRating: null,
+    agentHistoryRating: null,
     chatLog: [
       { id: "m7", sender: "staff", text: "Starting food shelf check.", timestamp: "10:00" },
       { id: "m8", sender: "agent", text: "Understood. Please report any shortages with photos.", timestamp: "10:01" },
@@ -53,6 +62,8 @@ const initialEvaluations: Evaluation[] = [
     staffName: "Ichiro Suzuki",
     taskTitle: "Store Cleaning",
     status: "pending",
+    conversationRating: null,
+    agentHistoryRating: null,
     chatLog: [
       { id: "m11", sender: "staff", text: "Interior cleaning is complete.", timestamp: "08:30" },
       { id: "m12", sender: "agent", text: "Please provide before and after photos.", timestamp: "08:31" },
@@ -66,6 +77,8 @@ const initialEvaluations: Evaluation[] = [
     staffName: "Misaki Takahashi",
     taskTitle: "Customer Service",
     status: "approved",
+    conversationRating: "good",
+    agentHistoryRating: "good",
     chatLog: [
       { id: "m16", sender: "staff", text: "Starting my customer service shift.", timestamp: "11:00" },
       { id: "m17", sender: "agent", text: "Please check today's campaign information.", timestamp: "11:01" },
@@ -76,6 +89,8 @@ const initialEvaluations: Evaluation[] = [
     staffName: "Kenta Ito",
     taskTitle: "Order Placement",
     status: "rejected",
+    conversationRating: "bad",
+    agentHistoryRating: "bad",
     chatLog: [
       { id: "m18", sender: "staff", text: "Starting the order placement task.", timestamp: "14:00" },
       { id: "m19", sender: "agent", text: "Please review the purchase order list.", timestamp: "14:01" },
@@ -114,7 +129,24 @@ export default function EvaluationsPage() {
     );
   };
 
+  const handleRating = (id: string, field: EvaluationRatingField, rating: Exclude<EvaluationRating, null>) => {
+    setEvaluations((prev) =>
+      prev.map((evaluation) =>
+        evaluation.id === id
+          ? {
+              ...evaluation,
+              [field]: evaluation[field] === rating ? null : rating,
+            }
+          : evaluation
+      )
+    );
+  };
+
   const selectedEvaluation = evaluations.find((e) => e.id === selectedId);
+  const ratingLabelMap: Record<Exclude<EvaluationRating, null>, string> = {
+    good: t.evaluations.good,
+    bad: t.evaluations.bad,
+  };
 
   return (
     <div className="flex flex-1 overflow-hidden">
@@ -212,6 +244,60 @@ export default function EvaluationsPage() {
               ✕
             </button>
           </div>
+          <div className="border-b border-zinc-200 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+            <div className="space-y-3">
+              {[
+                {
+                  field: "conversationRating" as const,
+                  label: t.evaluations.conversationEvaluation,
+                  value: selectedEvaluation.conversationRating,
+                },
+                {
+                  field: "agentHistoryRating" as const,
+                  label: t.evaluations.agentHistoryEvaluation,
+                  value: selectedEvaluation.agentHistoryRating,
+                },
+              ].map((item) => (
+                <div
+                  key={item.field}
+                  className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-950"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{item.label}</p>
+                      <p className="text-[11px] text-zinc-500">
+                        {item.value ? ratingLabelMap[item.value] : t.common.notSet}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleRating(selectedEvaluation.id, item.field, "good")}
+                        className={`rounded-md border px-3 py-1 text-xs font-medium transition-colors ${
+                          item.value === "good"
+                            ? "border-emerald-600 bg-emerald-600 text-white"
+                            : "border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
+                        }`}
+                      >
+                        {t.evaluations.good}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRating(selectedEvaluation.id, item.field, "bad")}
+                        className={`rounded-md border px-3 py-1 text-xs font-medium transition-colors ${
+                          item.value === "bad"
+                            ? "border-red-600 bg-red-600 text-white"
+                            : "border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-900"
+                        }`}
+                      >
+                        {t.evaluations.bad}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
           <div className="flex-1 space-y-3 overflow-y-auto p-4">
             {selectedEvaluation.chatLog.map((msg) => (
               <div
@@ -233,10 +319,12 @@ export default function EvaluationsPage() {
                   </div>
                   {msg.text && <p>{msg.text}</p>}
                   {msg.imageUrl && (
-                    <img
+                    <Image
                       src={msg.imageUrl}
                       alt="Chat attachment"
-                      className="mt-2 rounded-md border border-zinc-200 dark:border-zinc-700"
+                      width={400}
+                      height={300}
+                      className="mt-2 h-auto rounded-md border border-zinc-200 dark:border-zinc-700"
                     />
                   )}
                 </div>

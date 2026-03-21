@@ -1,21 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 import { I18nContext, locales, type Locale } from "@/lib/i18n";
 
-export default function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocale] = useState<Locale>("en");
+const DEFAULT_LOCALE: Locale = "en";
 
-  useEffect(() => {
-    const saved = localStorage.getItem("locale") as Locale | null;
-    if (saved && saved in locales) {
-      setLocale(saved);
-    }
-  }, []);
+function subscribe(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener("localechange", callback);
+
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("localechange", callback);
+  };
+}
+
+function getLocaleSnapshot(): Locale {
+  const saved = localStorage.getItem("locale");
+  return saved && saved in locales ? (saved as Locale) : DEFAULT_LOCALE;
+}
+
+export default function I18nProvider({ children }: { children: React.ReactNode }) {
+  const locale = useSyncExternalStore(
+    subscribe,
+    getLocaleSnapshot,
+    () => DEFAULT_LOCALE,
+  );
 
   const handleSetLocale = (newLocale: Locale) => {
-    setLocale(newLocale);
     localStorage.setItem("locale", newLocale);
+    window.dispatchEvent(new Event("localechange"));
   };
 
   return (

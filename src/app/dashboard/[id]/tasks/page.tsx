@@ -24,6 +24,8 @@ const initialTasks: Task[] = [
     dueDate: "2026-03-25",
     createdAt: "2026-03-20",
     evaluator: "human",
+    rewardHours: 8,
+    rewardAmount: 120,
     achievements: [
       { id: "a1", taskId: "1", title: "Opening preparation (register startup)", completed: true, order: 1 },
       { id: "a2", taskId: "1", title: "Morning shift coverage", completed: true, order: 2 },
@@ -41,6 +43,8 @@ const initialTasks: Task[] = [
     dueDate: "2026-03-24",
     createdAt: "2026-03-20",
     evaluator: "agent_auto",
+    rewardHours: 4,
+    rewardAmount: 60,
     achievements: [
       { id: "a5", taskId: "2", title: "Food shelf check", completed: false, order: 1 },
       { id: "a6", taskId: "2", title: "Sundries shelf check", completed: false, order: 2 },
@@ -57,6 +61,8 @@ const initialTasks: Task[] = [
     dueDate: "2026-03-23",
     createdAt: "2026-03-20",
     evaluator: "human",
+    rewardHours: 0,
+    rewardAmount: 0,
     achievements: [
       { id: "a8", taskId: "3", title: "Interior cleaning", completed: false, order: 1 },
       { id: "a9", taskId: "3", title: "Restroom cleaning", completed: false, order: 2 },
@@ -103,6 +109,8 @@ function parseCSV(text: string): Task[] {
         evaluatorIdx !== -1 && ["human", "agent_auto"].includes(cols[evaluatorIdx])
           ? (cols[evaluatorIdx] as Task["evaluator"])
           : "human",
+      rewardHours: 0,
+      rewardAmount: 0,
       achievements: achievementTitles.map((title, j) => ({
         id: `${taskId}-a${j}`,
         taskId,
@@ -209,6 +217,11 @@ export default function TasksPage() {
                 {total > 0 && (
                   <span className="text-xs text-zinc-400">
                     {done}/{total}
+                  </span>
+                )}
+                {task.rewardAmount > 0 && (
+                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    ${task.rewardAmount}
                   </span>
                 )}
               </div>

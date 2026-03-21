@@ -7,6 +7,7 @@ const en = {
     evaluations: "Evaluations",
     rewards: "Rewards",
     settings: "Settings",
+    agent: "Agent",
   },
   // Environments
   env: {
@@ -66,10 +67,41 @@ const en = {
     agentRejected: "Agent Rejected",
     chatStaff: "Staff",
     chatAgent: "Agent",
+    conversationEvaluation: "Conversation Evaluation",
+    agentHistoryEvaluation: "Agent History Evaluation",
+    good: "Good",
+    bad: "Bad",
   },
   // Staff
   staffPage: {
     title: "Staff",
+  },
+  // Rewards
+  rewards: {
+    title: "Rewards",
+    staff: "Staff",
+    task: "Task",
+    hours: "Hours",
+    amount: "Amount",
+    note: "Note",
+    total: "Total",
+    addReward: "Add Reward",
+    noRewards: "No rewards yet",
+  },
+  // Agent
+  agent: {
+    title: "Agent",
+    status: "Status",
+    active: "Active",
+    idle: "Idle",
+    error: "Error",
+    currentTask: "Current Task",
+    lastActivity: "Last Activity",
+    totalEvaluated: "Total Evaluated",
+    approved: "Approved",
+    rejected: "Rejected",
+    pending: "Pending",
+    noTask: "No active task",
   },
 };
 
