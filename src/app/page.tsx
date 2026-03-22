@@ -13,7 +13,7 @@ export default function Home() {
             Vercel Chat SDK x Gemini x Multi-Platform
           </p>
           <h1 className="max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
-            Shelf Coach
+            Kani
           </h1>
           <p className="max-w-2xl text-lg leading-8 text-slate-600">
             AI-powered operational assistant. Staff upload photos via

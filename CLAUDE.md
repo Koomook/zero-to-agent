@@ -12,12 +12,19 @@ After 사진으로 평가한 뒤 Manager가 대시보드에서 최종 검수한�
 ## Core Flow
 
 ```
+[Task List 생성]
+Manager가 대시보드에서 자연어 프롬프트 입력 (예: "50인 해커톤, 음식 테이블 3개...")
+  → Gemini 3 Flash: Task List + Tasks JSON 자동 생성 (generateTaskList)
+  → 미리보기에서 삭제/추가 편집
+  → 확정 → DB 저장
+
+[운영 플로우]
 시스템 자동 발송 (Cron or "Send Check Now")
   → Staff가 스레드에 Before 사진 업로드
-  → Gemini 2.5 Flash: 텍스트 가이드 생성 (analyzeBeforeImage)
+  → Gemini 3 Flash: 텍스트 가이드 생성 (analyzeBeforeImage)
   → Gemini 3.1 Flash Image: 가이드 이미지 GENERATE (generateGuideImage)
   → Staff가 After 사진 업로드
-  → Gemini 2.5 Flash: 평가 + 점수 (evaluateAfterImage)
+  → Gemini 3 Flash: 평가 + 점수 (evaluateAfterImage)
   → Manager Dashboard에서 OK/Fail 검수
   → 전부 OK → Ready to Payout
 ```
@@ -28,8 +35,8 @@ After 사진으로 평가한 뒤 Manager가 대시보드에서 최종 검수한�
 |-------|--------|
 | Framework | Next.js 16 + Tailwind CSS 4 |
 | Bot SDK | `chat` (Vercel Chat SDK) + `@chat-adapter/slack`, `telegram` |
-| AI (텍스트) | `@ai-sdk/google` → `gemini-2.5-flash` |
-| AI (이미지 생성) | `@ai-sdk/google` → `gemini-3.1-flash-image-preview` (Nano Banana 2) |
+| AI (텍스트) | `@ai-sdk/google` → `gemini-3-flash` |
+| AI (텍스트+이미지) | `@ai-sdk/google` → `gemini-3.1-flash-image-preview` (Nano Banana 2, 이미지 생성) |
 | DB | Supabase (PostgreSQL + Storage) |
 | State | `@chat-adapter/state-pg` → Supabase PostgreSQL (서버리스 영속) |
 | Deploy | Vercel |
@@ -43,6 +50,7 @@ Phase 1   (Foundation):     17/17  100%  DONE
 Phase 2   (Image Flow):     14/14  100%  DONE
 Phase 2.5 (Scheduler+AI):    8/8  100%  DONE
 Phase 3   (Dashboard):       6/11  55%
+Phase 3.5 (Prompt→TaskList): 0/7    0%
 Phase 4   (Telegram):        5/7   71%
 ```
 
@@ -60,6 +68,8 @@ Phase 4   (Telegram):        5/7   71%
 | `src/app/api/cron/check-tasks/route.ts` | Cron — 프로액티브 Task 발송 + subscribe |
 | `src/app/api/webhooks/[platform]/route.ts` | Chat SDK webhook (Slack/Telegram) |
 | `src/app/api/tasks/route.ts` | Task CRUD API |
+| `src/app/api/task-lists/generate/route.ts` | AI Task List 생성 API (Phase 3.5) |
+| `src/app/api/task-lists/confirm/route.ts` | Task List 확정 → DB 저장 API (Phase 3.5) |
 | `src/app/api/submissions/route.ts` | Submission 조회 |
 | `src/app/api/submissions/[id]/review/route.ts` | Manager OK/Fail API |
 | `vercel.json` | Vercel Cron 설정 (daily) |

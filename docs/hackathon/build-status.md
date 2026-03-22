@@ -103,6 +103,31 @@
 
 ---
 
+## Phase 3.5: Prompt → Task List 자동 생성
+
+Dashboard에서 Manager가 자연어 프롬프트로 Task List를 AI 자동 생성
+
+**플로우:**
+```
+Manager가 대시보드에서 상황 설명 입력 (예: "50인 해커톤, 음식 테이블 3개...")
+  → Gemini 2.5 Flash가 Task List + Tasks JSON 생성
+  → 미리보기에서 삭제/추가 편집
+  → 확정 → DB 저장
+  → "Send Check Now"로 바로 발송 가능
+```
+
+| # | Task | Status | Notes |
+|---|------|--------|-------|
+| 3.5.1 | `GeneratedTask`/`GeneratedTaskList` 타입 추가 | **TODO** | `src/lib/types.ts` |
+| 3.5.2 | `generateTaskList()` Gemini 함수 구현 | **TODO** | `src/lib/gemini.ts` — `generateObject()` + structured output |
+| 3.5.3 | `POST /api/task-lists/generate` API | **TODO** | 프롬프트 → AI 태스크 목록 반환 |
+| 3.5.4 | `POST /api/task-lists/confirm` API | **TODO** | 편집된 태스크 목록 → DB 저장 |
+| 3.5.5 | Dashboard UI — PromptInput 컴포넌트 | **TODO** | 텍스트영역 + "생성하기" 버튼 |
+| 3.5.6 | Dashboard UI — TaskPreview 컴포넌트 | **TODO** | 미리보기 (삭제/추가/재생성/확정) |
+| 3.5.7 | 통합 테스트 — 프롬프트→생성→편집→확정→Send Check Now | **TODO** | E2E 플로우 검증 |
+
+---
+
 ## Phase 4: Telegram 연동
 
 Chat SDK 멀티플랫폼 — Slack과 동일 핸들러 코드로 Telegram 지원
@@ -186,7 +211,8 @@ Phase 1   (Foundation):     17/17 DONE  █████████████�
 Phase 2   (Image Flow):     14/14 DONE  ████████████████ 100%
 Phase 2.5 (Scheduler+AI):    8/8  DONE  ████████████████ 100%
 Phase 3   (Dashboard):       6/11 DONE  █████████░░░░░░░  55%
+Phase 3.5 (Prompt→TaskList): 0/7  TODO  ░░░░░░░░░░░░░░░░   0%
 Phase 4   (Telegram):        5/7  DONE  ███████████░░░░░  71%
 ```
 
-**Next Priority: Phase 3** — Dashboard에 AI Guide Image 표시 + Task 생성 폼
+**Next Priority: Phase 3.5** — Prompt → Task List 자동 생성 (Manager가 자연어로 Task List 생성)

@@ -3,17 +3,8 @@
 import { useState } from "react";
 import type { GeneratedTask } from "@/lib/types";
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '8px 12px',
-  borderRadius: 8,
-  border: '1px solid var(--card-border)',
-  background: 'var(--background)',
-  color: 'var(--foreground)',
-  fontSize: 13,
-  fontFamily: 'inherit',
-  outline: 'none',
-};
+const inputClass =
+  "w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
 
 export function TaskPreview({
   tasks,
@@ -49,91 +40,42 @@ export function TaskPreview({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="space-y-4">
       {/* Task list name */}
       <div>
-        <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--muted)', marginBottom: 6 }}>
+        <label className="mb-1 block text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">
           Task List Name
         </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => onNameChange(e.target.value)}
-          style={inputStyle}
-        />
+        <input type="text" value={name} onChange={(e) => onNameChange(e.target.value)} className={inputClass} />
       </div>
 
-      {/* Generated tasks */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Tasks */}
+      <div className="space-y-2">
         {tasks.map((task, i) => (
           <div
             key={i}
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 12,
-              padding: 12,
-              borderRadius: 10,
-              border: '1px solid var(--card-border)',
-              background: 'var(--background)',
-            }}
+            className="flex items-start gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-900"
           >
-            <span
-              className="font-data"
-              style={{
-                marginTop: 2,
-                width: 24, height: 24,
-                borderRadius: '50%',
-                background: 'var(--accent-soft)',
-                color: 'var(--accent)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 11,
-                fontWeight: 600,
-                flexShrink: 0,
-              }}
-            >
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 font-mono text-[10px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
               {i + 1}
             </span>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 14, fontWeight: 500, color: 'var(--foreground)', margin: 0 }}>
-                {task.title}
-              </p>
-              <p style={{ marginTop: 4, fontSize: 13, color: 'var(--muted)', lineHeight: 1.5, margin: 0 }}>
-                {task.text_guide}
-              </p>
-              <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 11, color: 'var(--muted)', flexShrink: 0 }}>Assigned:</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{task.title}</p>
+              <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{task.text_guide}</p>
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <span className="text-[11px] text-zinc-400 dark:text-zinc-500">Assigned:</span>
                 <input
                   type="text"
                   value={task.assigned_to ?? ""}
                   onChange={(e) => onUpdateTask(i, { ...task, assigned_to: e.target.value || null })}
                   placeholder="Unassigned"
-                  style={{
-                    ...inputStyle,
-                    padding: '4px 8px',
-                    fontSize: 12,
-                    width: 120,
-                  }}
+                  className="w-28 rounded border border-zinc-300 bg-white px-1.5 py-0.5 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
                 />
               </div>
             </div>
             <button
               onClick={() => onRemoveTask(i)}
-              style={{
-                flexShrink: 0,
-                width: 28, height: 28,
-                borderRadius: 6,
-                border: 'none',
-                background: 'transparent',
-                color: 'var(--muted)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 16,
-              }}
+              className="shrink-0 rounded p-1 text-zinc-400 hover:bg-zinc-200 hover:text-zinc-600 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
             >
               ×
             </button>
@@ -143,50 +85,20 @@ export function TaskPreview({
 
       {/* Add task */}
       {adding ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 10, border: '2px dashed var(--card-border)' }}>
-          <input
-            type="text"
-            placeholder="Task title"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            style={inputStyle}
-          />
-          <textarea
-            placeholder="Text guide (what to check)"
-            value={newGuide}
-            onChange={(e) => setNewGuide(e.target.value)}
-            rows={2}
-            style={{ ...inputStyle, resize: 'vertical' as const, fontFamily: 'inherit' }}
-          />
-          <div style={{ display: 'flex', gap: 8 }}>
+        <div className="space-y-2 rounded-md border-2 border-dashed border-zinc-300 p-3 dark:border-zinc-600">
+          <input type="text" placeholder="Task title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className={inputClass} />
+          <textarea placeholder="Text guide" value={newGuide} onChange={(e) => setNewGuide(e.target.value)} rows={2} className={`${inputClass} resize-none`} />
+          <div className="flex gap-2">
             <button
               onClick={handleAdd}
               disabled={!newTitle.trim()}
-              style={{
-                padding: '7px 16px',
-                borderRadius: 8,
-                border: 'none',
-                background: 'var(--foreground)',
-                color: 'var(--background)',
-                fontSize: 13,
-                fontWeight: 500,
-                cursor: 'pointer',
-                opacity: !newTitle.trim() ? 0.4 : 1,
-              }}
+              className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
               Add
             </button>
             <button
               onClick={() => setAdding(false)}
-              style={{
-                padding: '7px 16px',
-                borderRadius: 8,
-                border: '1px solid var(--card-border)',
-                background: 'transparent',
-                color: 'var(--foreground)',
-                fontSize: 13,
-                cursor: 'pointer',
-              }}
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
             >
               Cancel
             </button>
@@ -195,53 +107,25 @@ export function TaskPreview({
       ) : (
         <button
           onClick={() => setAdding(true)}
-          style={{
-            width: '100%',
-            padding: 10,
-            borderRadius: 10,
-            border: '2px dashed var(--card-border)',
-            background: 'transparent',
-            color: 'var(--muted)',
-            fontSize: 13,
-            cursor: 'pointer',
-          }}
+          className="w-full rounded-md border-2 border-dashed border-zinc-300 py-2 text-sm text-zinc-400 transition-colors hover:border-zinc-400 hover:text-zinc-600 dark:border-zinc-600 dark:hover:border-zinc-500"
         >
           + Add Task
         </button>
       )}
 
       {/* Actions */}
-      <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
+      <div className="flex gap-2 pt-1">
         <button
           onClick={onConfirm}
           disabled={saving || tasks.length === 0 || !name.trim()}
-          style={{
-            padding: '10px 24px',
-            borderRadius: 10,
-            border: 'none',
-            background: 'var(--accent)',
-            color: '#fff',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-            opacity: (saving || tasks.length === 0 || !name.trim()) ? 0.5 : 1,
-          }}
+          className="rounded-md bg-amber-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
         >
           {saving ? "Saving..." : "Confirm & Save"}
         </button>
         <button
           onClick={onRegenerate}
           disabled={saving}
-          style={{
-            padding: '10px 24px',
-            borderRadius: 10,
-            border: '1px solid var(--card-border)',
-            background: 'transparent',
-            color: 'var(--foreground)',
-            fontSize: 14,
-            fontWeight: 500,
-            cursor: 'pointer',
-          }}
+          className="rounded-md border border-zinc-300 px-5 py-2 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
         >
           Regenerate
         </button>

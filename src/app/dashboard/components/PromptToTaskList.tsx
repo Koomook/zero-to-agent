@@ -77,85 +77,52 @@ export function PromptToTaskList({
   const isInputPhase = phase === "idle" || phase === "generating";
   const isPreviewPhase = phase === "preview" || phase === "saving";
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '10px 14px',
-    borderRadius: 10,
-    border: '1px solid var(--card-border)',
-    background: 'var(--background)',
-    color: 'var(--foreground)',
-    fontSize: 14,
-    fontFamily: 'inherit',
-    resize: 'vertical' as const,
-    outline: 'none',
-    transition: 'border-color 0.15s',
-  };
-
   return (
-    <div className="card-warm" style={{ padding: 24 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 8,
-          background: 'var(--accent-soft)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 16,
-        }}>
+    <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="mb-4 flex items-center gap-2.5">
+        <span className="flex h-7 w-7 items-center justify-center rounded-md bg-amber-100 text-sm text-amber-600 dark:bg-amber-900/30">
           ✦
-        </div>
-        <h2 style={{ fontSize: 17, fontWeight: 600, color: 'var(--foreground)', margin: 0 }}>
+        </span>
+        <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
           Create Task List with AI
         </h2>
       </div>
 
       {error ? (
-        <div style={{ marginBottom: 16, padding: 12, borderRadius: 10, background: 'var(--danger-soft)', color: 'var(--danger)', fontSize: 13 }}>
+        <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-400">
           {error}
         </div>
       ) : null}
 
       {phase === "done" ? (
-        <div style={{ padding: 12, borderRadius: 10, background: 'var(--success-soft)', color: 'var(--success)', fontSize: 13, fontWeight: 500 }}>
+        <div className="rounded-md bg-emerald-50 p-3 text-sm font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
           Task list created successfully!
         </div>
       ) : null}
 
       {isInputPhase ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="space-y-3">
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Describe your situation... (e.g., 50-person hackathon event with 3 food tables, 1 drink station, 1 merch table)"
-            rows={3}
+            rows={5}
             disabled={phase === "generating"}
-            style={{ ...inputStyle, opacity: phase === "generating" ? 0.5 : 1 }}
+            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm placeholder:text-zinc-400 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
           />
           <button
             onClick={handleGenerate}
             disabled={phase === "generating" || !prompt.trim()}
-            style={{
-              alignSelf: 'flex-start',
-              padding: '10px 24px',
-              borderRadius: 10,
-              border: 'none',
-              background: 'var(--accent)',
-              color: '#fff',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-              opacity: (phase === "generating" || !prompt.trim()) ? 0.5 : 1,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
+            className="rounded-md bg-amber-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-amber-700 disabled:opacity-50"
           >
             {phase === "generating" ? (
-              <>
-                <svg className="spinner" width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <circle opacity="0.25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path opacity="0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              <span className="flex items-center gap-2">
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
                 Generating...
-              </>
+              </span>
             ) : (
               "Generate Task List"
             )}

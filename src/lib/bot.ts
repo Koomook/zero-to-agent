@@ -21,7 +21,7 @@ import { analyzeBeforeImage, evaluateAfterImage, generateGuideImage } from "@/li
 import type { Task, TaskSubmission } from "@/lib/types";
 
 const SYSTEM_PROMPT = [
-  "You are Shelf Coach, an AI-powered operational assistant.",
+  "You are Kani, an AI-powered operational assistant.",
   "For this demo, default to being a helpful conversational assistant in Slack.",
   "If task mode is available, you can guide staff through operational photo tasks.",
   "Be concise, actionable, and encouraging.",
@@ -142,7 +142,7 @@ async function updateSubmission(id: string, updates: Partial<TaskSubmission>) {
 }
 
 async function generateReply(input: string) {
-  const prompt = input.trim() || "Say hello and explain you are Shelf Coach.";
+  const prompt = input.trim() || "Say hello and explain you are Kani.";
 
   const result = await generateText({
     model: google("gemini-2.5-flash"),
@@ -191,7 +191,7 @@ function createBot() {
   }
 
   const bot = new Chat({
-    userName: "shelf-coach",
+    userName: "kani",
     adapters,
     state: process.env.POSTGRES_URL
       ? createPostgresState()
@@ -286,7 +286,7 @@ function createBot() {
     try {
       imageUrl = await uploadImage(imageBuffer, `submission.${ext}`, mimeType);
     } catch (e) {
-      console.error("[shelf-coach] Upload error:", e);
+      console.error("[kani] Upload error:", e);
       await thread.post("Failed to save image. Please try again.");
       return;
     }
@@ -301,7 +301,7 @@ function createBot() {
           mimeType,
         );
       } catch (e) {
-        console.error("[shelf-coach] Gemini analyze error:", e);
+        console.error("[kani] Gemini analyze error:", e);
         guide = "AI guide generation failed. Please follow the task guide above.";
       }
 
@@ -323,7 +323,7 @@ function createBot() {
             guideImageResult.mimeType,
           );
         } catch (e) {
-          console.error("[shelf-coach] Guide image upload error:", e);
+          console.error("[kani] Guide image upload error:", e);
         }
       }
 
@@ -357,7 +357,7 @@ function createBot() {
             ],
           });
         } catch (e) {
-          console.error("[shelf-coach] Guide image send error:", e);
+          console.error("[kani] Guide image send error:", e);
         }
       }
     } else {
@@ -373,7 +373,7 @@ function createBot() {
         score = result.score;
         evaluation = result.evaluation;
       } catch (e) {
-        console.error("[shelf-coach] Gemini evaluate error:", e);
+        console.error("[kani] Gemini evaluate error:", e);
         score = 0;
         evaluation = "AI evaluation failed. Manager will review manually.";
       }
